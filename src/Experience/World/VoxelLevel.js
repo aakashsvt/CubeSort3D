@@ -9,9 +9,8 @@ export default class VoxelLevel {
         this.debug = this.experience.debug
 
         this.container = new THREE.Group()
-        this.container.position.set(0, 2.5, 0)
-        this.container.scale.set(0.7, 0.7, 0.7)
-        // User's custom selected rotation
+        this.container.position.set(0, 1.5, 0)
+        this.container.scale.set(0.3, 0.3, 0.3)
         this.container.rotation.set(-1.106, -0.411, -0.952)
         this.scene.add(this.container)
 
@@ -119,7 +118,8 @@ export default class VoxelLevel {
         }
 
         this.instancedMesh = new THREE.InstancedMesh(geometry, material, cubesData.length)
-
+        this.instancedMesh.castShadow = false
+        this.instancedMesh.receiveShadow = false
         const dummy = new THREE.Object3D()
         const color = new THREE.Color()
 
