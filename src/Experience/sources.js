@@ -20,6 +20,6 @@ export default [
     {
         name: 'rouletteModel',
         type: 'gltfModel',
-        path: 'roulette.glb'
+        path: 'models/roulette.glb'
     },
 ]
