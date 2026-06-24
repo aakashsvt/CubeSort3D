@@ -1,5 +1,7 @@
 import Experience from '../Experience.js'
+import VoxelLevel from './VoxelLevel.js'
 import Environment from './Environment.js'
+import * as THREE from 'three'
 
 export default class World
 {
@@ -12,13 +14,15 @@ export default class World
         // Wait for resources
         this.resources.on('ready', () =>
         {
-            // Setup
+            
+            this.voxelLevel = new VoxelLevel()
+            this.voxelLevel.loadFromJSON(this.resources.items.levelData)
             this.environment = new Environment()
         })
     }
 
     update()
     {
-        
+        if(this.voxelLevel) this.voxelLevel.update()
     }
 }
