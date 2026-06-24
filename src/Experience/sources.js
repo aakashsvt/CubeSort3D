@@ -22,4 +22,9 @@ export default [
         type: 'gltfModel',
         path: 'models/roulette.glb'
     },
+    {
+        name: 'cubeModel',
+        type: 'gltfModel',
+        path: 'models/cube.glb'
+    },
 ]
