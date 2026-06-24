@@ -16,7 +16,7 @@ export default class World
         this.resources.on('ready', () =>
         {
             
-            this.voxelLevel = new VoxelLevel()
+            this.voxelLevel = new VoxelLevel(this.resources.items.cubeModel)
             this.voxelLevel.loadFromJSON(this.resources.items.levelData)
             this.roulette = new Roulette()
             this.environment = new Environment()

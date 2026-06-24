@@ -2,9 +2,11 @@ import * as THREE from 'three'
 import Experience from '../Experience.js'
 
 export default class VoxelLevel {
-    constructor() {
+    constructor(cubeModel) {
         this.experience = new Experience()
         this.scene = this.experience.scene
+        this.cubeModel = cubeModel
+        this.debug = this.experience.debug
         
         this.container = new THREE.Group()
         this.container.position.set(0, 2.5, 0)
@@ -14,6 +16,7 @@ export default class VoxelLevel {
         
         this.cubes = []
         this.instancedMesh = null
+        this.debugObjects = []
     }
 
     /**
@@ -60,13 +63,39 @@ export default class VoxelLevel {
         const centerY = (minY + maxY) / 2
         const centerZ = (minZ + maxZ) / 2
 
-        // Use InstancedMesh for high-performance rendering of thousands of voxels
-        const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize)
-        const material = new THREE.MeshStandardMaterial({ 
-            color: 0xffffff,
-            roughness: 0.3,
-            metalness: 0.1
+        // Extract geometry and material from cube model
+        let geometry, material
+        this.cubeModel.scene.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+                geometry = child.geometry.clone()
+                material = child.material.clone()
+                if (Array.isArray(material)) {
+                    material = material[0].clone()
+                }
+                material.vertexColors = false
+            }
         })
+        
+        if (!geometry || !material) {
+            console.error('Could not find mesh in cube model! Using BoxGeometry instead.')
+            geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize)
+            material = new THREE.MeshStandardMaterial({ 
+                color: 0xffffff,
+                roughness: 0.3,
+                metalness: 0.1
+            })
+        } else {
+            // Compute bounding box of geometry
+            geometry.computeBoundingBox()
+            // Center the geometry first
+            const center = geometry.boundingBox.getCenter(new THREE.Vector3())
+            geometry.translate(-center.x, -center.y, -center.z)
+            // Scale the geometry to cubeSize
+            const size = geometry.boundingBox.getSize(new THREE.Vector3())
+            const maxDim = Math.max(size.x, size.y, size.z)
+            const scaleFactor = cubeSize / maxDim
+            geometry.scale(scaleFactor, scaleFactor, scaleFactor)
+        }
         
         this.instancedMesh = new THREE.InstancedMesh(geometry, material, cubesData.length)
         
@@ -118,15 +147,55 @@ export default class VoxelLevel {
         this.instancedMesh.instanceColor.needsUpdate = true
         
         this.container.add(this.instancedMesh)
+        
+        // Debug mode
+        if (this.debug && this.debug.active) {
+            // Add debug single cube
+            const debugCube = new THREE.Mesh(geometry, material)
+            debugCube.position.set(0, 0, 0)
+            this.container.add(debugCube)
+            this.debugObjects.push(debugCube)
+            
+            // Add bounding box for debug cube
+            const debugCubeBoxHelper = new THREE.BoxHelper(debugCube, 0xff0000)
+            this.container.add(debugCubeBoxHelper)
+            this.debugObjects.push(debugCubeBoxHelper)
+            
+            // Add bounding box helper for instanced mesh
+            this.instancedMesh.computeBoundingSphere()
+            this.instancedMesh.computeBoundingBox()
+            const instancedBoxHelper = new THREE.BoxHelper(this.instancedMesh, 0x00ff00)
+            this.container.add(instancedBoxHelper)
+            this.debugObjects.push(instancedBoxHelper)
+        }
     }
 
     clear() {
         if (this.instancedMesh) {
             this.instancedMesh.geometry.dispose()
-            this.instancedMesh.material.dispose()
+            if (this.instancedMesh.material) {
+                if (Array.isArray(this.instancedMesh.material)) {
+                    this.instancedMesh.material.forEach(m => m.dispose())
+                } else {
+                    this.instancedMesh.material.dispose()
+                }
+            }
             this.container.remove(this.instancedMesh)
             this.instancedMesh = null
         }
+        // Clear debug objects
+        for (const obj of this.debugObjects) {
+            if (obj.geometry) obj.geometry.dispose()
+            if (obj.material) {
+                if (Array.isArray(obj.material)) {
+                    obj.material.forEach(m => m.dispose())
+                } else {
+                    obj.material.dispose()
+                }
+            }
+            this.container.remove(obj)
+        }
+        this.debugObjects = []
         this.cubes = []
     }
 
