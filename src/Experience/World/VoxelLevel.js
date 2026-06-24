@@ -93,6 +93,10 @@ export default class VoxelLevel {
                     material = material[0].clone()
                 }
                 material.vertexColors = false
+                
+                if (material.map) {
+                    material.map.colorSpace = THREE.SRGBColorSpace
+                }
             }
         })
 
@@ -101,16 +105,11 @@ export default class VoxelLevel {
             geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize)
             material = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
-                roughness: 0.3,
-                metalness: 0.1
             })
         } else {
-            // Compute bounding box of geometry
             geometry.computeBoundingBox()
-            // Center the geometry first
             const center = geometry.boundingBox.getCenter(new THREE.Vector3())
             geometry.translate(-center.x, -center.y, -center.z)
-            // Scale the geometry to cubeSize
             const size = geometry.boundingBox.getSize(new THREE.Vector3())
             const maxDim = Math.max(size.x, size.y, size.z)
             const scaleFactor = cubeSize / maxDim
@@ -141,9 +140,11 @@ export default class VoxelLevel {
             // Parse Color
             const palColor = palette[cubeData.colorIndex]
             if (palColor) {
-                // If it's an object with r,g,b (from Unity JsonUtility)
                 if (palColor.r !== undefined) {
                     color.setRGB(palColor.r, palColor.g, palColor.b)
+                    // CRITICAL: Unity exports color picker values in sRGB, but Three.js setRGB assumes Linear space.
+                    // We must convert from sRGB to Linear so the final rendered colors exactly match your JSON/Unity!
+                    color.convertSRGBToLinear()
                 }
                 // Fallback for hex string
                 else if (typeof palColor === 'string') {
@@ -163,7 +164,6 @@ export default class VoxelLevel {
             })
         }
 
-        // Notify Three.js that instances need an update
         this.instancedMesh.instanceMatrix.needsUpdate = true
         this.instancedMesh.instanceColor.needsUpdate = true
 
