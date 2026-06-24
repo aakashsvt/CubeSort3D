@@ -16,5 +16,10 @@ export default [
         name: 'levelData',
         type: 'json',
         path: 'level data/level.json'
-    }
+    },
+    {
+        name: 'rouletteModel',
+        type: 'gltfModel',
+        path: 'roulette.glb'
+    },
 ]
