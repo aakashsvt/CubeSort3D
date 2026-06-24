@@ -1,20 +1,23 @@
-*
-{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
 html,
-body
-{
+body {
     overflow: hidden;
     height: 100dvh;
     width: 100dvw;
+    background: radial-gradient(ellipse at center,
+            #E8D7EC 0%,
+            #E2CEE7 25%,
+            #DBC3E0 50%,
+            #D4B4DA 75%,
+            #CCA3D4 100%);
 }
 
-.webgl
-{
+.webgl {
     position: fixed;
     top: 0;
     left: 0;

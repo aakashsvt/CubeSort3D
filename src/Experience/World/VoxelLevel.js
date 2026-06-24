@@ -7,6 +7,9 @@ export default class VoxelLevel {
         this.scene = this.experience.scene
         
         this.container = new THREE.Group()
+        this.container.position.set(0, 2.5, 0)
+        this.container.scale.set(0.7, 0.7, 0.7)
+        this.container.rotation.set(Math.PI / 10, -Math.PI / 6, 0)
         this.scene.add(this.container)
         
         this.cubes = []
