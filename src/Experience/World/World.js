@@ -2,7 +2,7 @@ import Experience from '../Experience.js'
 import VoxelLevel from './VoxelLevel.js'
 import Roulette from './Roulette.js'
 import Environment from './Environment.js'
-import * as THREE from 'three'
+
 
 export default class World
 {
@@ -16,8 +16,7 @@ export default class World
         this.resources.on('ready', () =>
         {
             
-            this.voxelLevel = new VoxelLevel(this.resources.items.cubeModel)
-            this.voxelLevel.loadFromJSON(this.resources.items.levelData)
+            this.voxelLevel = new VoxelLevel()
             this.roulette = new Roulette()
             this.environment = new Environment()
         })

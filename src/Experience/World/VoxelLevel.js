@@ -2,11 +2,10 @@ import * as THREE from 'three'
 import Experience from '../Experience.js'
 
 export default class VoxelLevel {
-    constructor(cubeModel) {
+    constructor() {
         this.experience = new Experience()
         this.scene = this.experience.scene
-        this.cubeModel = cubeModel
-        this.debug = this.experience.debug
+        this.resources = this.experience.resources
         
         this.container = new THREE.Group()
         this.container.position.set(0, 2.5, 0)
@@ -17,12 +16,16 @@ export default class VoxelLevel {
         this.cubes = []
         this.instancedMesh = null
         this.debugObjects = []
+
+        // Resources
+        this.resource = this.resources.items.levelData
+        this.cubeModel = this.resources.items.cubeModel
+
+        this.setModel()
     }
 
-    /**
-     * Loads the voxel level from parsed JSON data matching the LevelAuthoringData format.
-     */
-    loadFromJSON(json) {
+    setModel() {
+        const json = this.resource
         this.clear()
         
         // Extract data based on the LevelAuthoringData JSON structure you provided
