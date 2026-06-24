@@ -9,12 +9,13 @@ body {
     overflow: hidden;
     height: 100dvh;
     width: 100dvw;
-    background: radial-gradient(ellipse at center,
+    /* background: radial-gradient(ellipse at center,
             #E8D7EC 0%,
             #E2CEE7 25%,
             #DBC3E0 50%,
             #D4B4DA 75%,
-            #CCA3D4 100%);
+            #CCA3D4 100%); */
+    background: #000;
 }
 
 .webgl {

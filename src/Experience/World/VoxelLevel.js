@@ -6,13 +6,31 @@ export default class VoxelLevel {
         this.experience = new Experience()
         this.scene = this.experience.scene
         this.resources = this.experience.resources
-        
+        this.debug = this.experience.debug
+
         this.container = new THREE.Group()
         this.container.position.set(0, 2.5, 0)
         this.container.scale.set(0.7, 0.7, 0.7)
-        this.container.rotation.set(Math.PI / 10, -Math.PI / 6, 0)
+        // User's custom selected rotation
+        this.container.rotation.set(-1.106, -0.411, -0.952)
         this.scene.add(this.container)
-        
+
+        // Debug
+        if (this.debug.active) {
+            this.debugFolder = this.debug.ui.addFolder('voxelLevel')
+            
+            this.debugFolder.add(this.container.rotation, 'x').min(-Math.PI).max(Math.PI).step(0.001).name('rotationX')
+            this.debugFolder.add(this.container.rotation, 'y').min(-Math.PI).max(Math.PI).step(0.001).name('rotationY')
+            this.debugFolder.add(this.container.rotation, 'z').min(-Math.PI).max(Math.PI).step(0.001).name('rotationZ')
+
+            const debugActions = {
+                printRotation: () => {
+                    console.log(`Current Voxel Rotation -> x: ${this.container.rotation.x}, y: ${this.container.rotation.y}, z: ${this.container.rotation.z}`)
+                }
+            }
+            this.debugFolder.add(debugActions, 'printRotation').name('Print Rotation')
+        }
+
         this.cubes = []
         this.instancedMesh = null
         this.debugObjects = []
@@ -27,21 +45,21 @@ export default class VoxelLevel {
     setModel() {
         const json = this.resource
         this.clear()
-        
+
         // Extract data based on the LevelAuthoringData JSON structure you provided
         const modelName = json.levelName || (json.dashboard && json.dashboard.modelName) || 'Unknown Level'
-        
+
         // Fallback to defaults if 'dashboard' is missing
         const dashboard = json.dashboard || {}
         const cubeSize = dashboard.cubeSize || 1
         const palette = dashboard.palette || []
-        
+
         // We look for lastGeneratedCubes, but fall back to cubes just in case
         const cubesData = dashboard.lastGeneratedCubes || json.cubes || []
-        
+
         console.log(`Loading Voxel Level: ${modelName}`)
         console.log(`Total Cubes: ${cubesData.length}`)
-        
+
         if (cubesData.length === 0) return
 
         // Calculate grid bounds to perfectly center the model
@@ -53,7 +71,7 @@ export default class VoxelLevel {
             const x = c.gridPos ? c.gridPos.x : c.x
             const y = c.gridPos ? c.gridPos.y : c.y
             const z = c.gridPos ? c.gridPos.z : c.z
-            
+
             if (x < minX) minX = x
             if (x > maxX) maxX = x
             if (y < minY) minY = y
@@ -61,7 +79,7 @@ export default class VoxelLevel {
             if (z < minZ) minZ = z
             if (z > maxZ) maxZ = z
         }
-        
+
         const centerX = (minX + maxX) / 2
         const centerY = (minY + maxY) / 2
         const centerZ = (minZ + maxZ) / 2
@@ -78,11 +96,11 @@ export default class VoxelLevel {
                 material.vertexColors = false
             }
         })
-        
+
         if (!geometry || !material) {
             console.error('Could not find mesh in cube model! Using BoxGeometry instead.')
             geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize)
-            material = new THREE.MeshStandardMaterial({ 
+            material = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
                 roughness: 0.3,
                 metalness: 0.1
@@ -99,9 +117,9 @@ export default class VoxelLevel {
             const scaleFactor = cubeSize / maxDim
             geometry.scale(scaleFactor, scaleFactor, scaleFactor)
         }
-        
+
         this.instancedMesh = new THREE.InstancedMesh(geometry, material, cubesData.length)
-        
+
         const dummy = new THREE.Object3D()
         const color = new THREE.Color()
 
@@ -110,7 +128,7 @@ export default class VoxelLevel {
             const x = cubeData.gridPos ? cubeData.gridPos.x : cubeData.x
             const y = cubeData.gridPos ? cubeData.gridPos.y : cubeData.y
             const z = cubeData.gridPos ? cubeData.gridPos.z : cubeData.z
-            
+
             // Set Position relative to the center
             dummy.position.set(
                 (x - centerX) * cubeSize,
@@ -126,7 +144,7 @@ export default class VoxelLevel {
                 // If it's an object with r,g,b (from Unity JsonUtility)
                 if (palColor.r !== undefined) {
                     color.setRGB(palColor.r, palColor.g, palColor.b)
-                } 
+                }
                 // Fallback for hex string
                 else if (typeof palColor === 'string') {
                     let hexStr = palColor.startsWith('#') ? palColor : '#' + palColor
@@ -136,7 +154,7 @@ export default class VoxelLevel {
                 color.setHex(0xffffff) // Fallback color
             }
             this.instancedMesh.setColorAt(i, color)
-            
+
             // Store logical data
             this.cubes.push({
                 instanceId: i,
@@ -144,13 +162,13 @@ export default class VoxelLevel {
                 colorIndex: cubeData.colorIndex
             })
         }
-        
+
         // Notify Three.js that instances need an update
         this.instancedMesh.instanceMatrix.needsUpdate = true
         this.instancedMesh.instanceColor.needsUpdate = true
-        
+
         this.container.add(this.instancedMesh)
-        
+
         // Debug mode
         if (this.debug && this.debug.active) {
             // Add debug single cube
@@ -158,12 +176,12 @@ export default class VoxelLevel {
             debugCube.position.set(0, 0, 0)
             this.container.add(debugCube)
             this.debugObjects.push(debugCube)
-            
+
             // Add bounding box for debug cube
             const debugCubeBoxHelper = new THREE.BoxHelper(debugCube, 0xff0000)
             this.container.add(debugCubeBoxHelper)
             this.debugObjects.push(debugCubeBoxHelper)
-            
+
             // Add bounding box helper for instanced mesh
             this.instancedMesh.computeBoundingSphere()
             this.instancedMesh.computeBoundingBox()
