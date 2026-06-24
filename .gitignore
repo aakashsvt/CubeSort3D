@@ -31,10 +31,6 @@ Thumbs.db
 .parcel-cache/
 .eslintcache
 
-# Vite
-vite.config.ts.timestamp-*
-vite.config.js.timestamp-*
-
 # Coverage
 coverage/
 
@@ -42,17 +38,9 @@ coverage/
 *.tmp
 *.temp
 
-# Three.js generated assets (optional)
+# C# scripts
+*.cs
+
+# Optional Blender backups
 *.blend1
 *.blend2
-
-# Keep all models and assets
-# DO NOT ignore:
-# *.glb
-# *.gltf
-# *.fbx
-# *.png
-# *.jpg
-# *.jpeg
-# *.mp3
-# *.wav
