@@ -45,3 +45,6 @@ coverage/
 # Optional Blender backups
 *.blend1
 *.blend2
+
+# Documentation
+CSharp_Scripts_Documentation.md

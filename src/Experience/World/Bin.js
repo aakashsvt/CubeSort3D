@@ -29,8 +29,90 @@ export default class Bin {
         
         const palette = dashboard.palette || []
         const binIndicesStr = dashboard.binColorIndicesInput || ""
-        const binIndices = binIndicesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
+        const configuredColorPool = binIndicesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
         this.activeBinCount = dashboard.activeBinCount || 4
+        const targetBinCount = dashboard.targetBinCount || 24
+        const maxCapacity = parseInt(dashboard.binCapacitiesInput || "50")
+
+        // 1. Calculate cube counts per color
+        const cubes = dashboard.lastGeneratedCubes || levelData.cubes || []
+        const remainingCubesPerColor = {}
+        cubes.forEach(c => {
+            remainingCubesPerColor[c.colorIndex] = (remainingCubesPerColor[c.colorIndex] || 0) + 1
+        })
+
+        // 2. Get colors with demand
+        const colorsWithDemand = []
+        for (const c of configuredColorPool) {
+            if (remainingCubesPerColor[c] > 0 && !colorsWithDemand.includes(c)) colorsWithDemand.push(c)
+        }
+        for (const c in remainingCubesPerColor) {
+            const cInt = parseInt(c)
+            if (remainingCubesPerColor[cInt] > 0 && !colorsWithDemand.includes(cInt)) colorsWithDemand.push(cInt)
+        }
+
+        // 3. Calculate minimum bins
+        const desired = {}
+        let minTotalBins = 0
+        for (const c of colorsWithDemand) {
+            const minBins = maxCapacity <= 0 ? 1 : Math.ceil(remainingCubesPerColor[c] / maxCapacity)
+            desired[c] = minBins
+            minTotalBins += minBins
+        }
+
+        // 4. Distribute extra bins
+        let extraBins = targetBinCount - minTotalBins
+        const expandable = [...colorsWithDemand].sort((a, b) => remainingCubesPerColor[b] - remainingCubesPerColor[a])
+        let safety = 0
+        while (extraBins > 0 && expandable.length > 0 && safety < 1000) {
+            safety++
+            for (let i = 0; i < expandable.length && extraBins > 0; i++) {
+                const c = expandable[i]
+                if (desired[c] < remainingCubesPerColor[c]) {
+                    desired[c]++
+                    extraBins--
+                }
+            }
+            for (let i = expandable.length - 1; i >= 0; i--) {
+                const c = expandable[i]
+                if (desired[c] >= remainingCubesPerColor[c]) {
+                    expandable.splice(i, 1)
+                }
+            }
+        }
+
+        // 5. Build plans by color
+        const plansByColor = {}
+        for (const c of colorsWithDemand) {
+            let demand = remainingCubesPerColor[c]
+            let dBins = desired[c] || 1
+            const capacities = []
+            if (maxCapacity <= 0) capacities.push(demand)
+            else {
+                let remainingToAllocate = demand
+                let binsLeft = dBins
+                while (binsLeft > 0) {
+                    let cap = Math.min(remainingToAllocate, maxCapacity)
+                    capacities.push(cap)
+                    remainingToAllocate -= cap
+                    binsLeft--
+                }
+            }
+            plansByColor[c] = capacities.map(cap => c)
+        }
+
+        // 6. Round robin enqueue
+        const binIndices = []
+        let addedPlan
+        do {
+            addedPlan = false
+            for (const c of colorsWithDemand) {
+                if (plansByColor[c] && plansByColor[c].length > 0) {
+                    binIndices.push(plansByColor[c].shift())
+                    addedPlan = true
+                }
+            }
+        } while(addedPlan)
 
         this.originalModel = this.resource.scene
         this.originalShadow = this.resources.items.binShadowModel.scene
@@ -119,6 +201,9 @@ export default class Bin {
 
             item.shadow.position.y = this.debugSettings.shadowY
             item.bin.rotation.x = this.debugSettings.binRotationX
+            
+            // Only render 2 rows at a time (queueIndex 0 and 1)
+            item.group.visible = item.queueIndex < 2
         }
     }
 
