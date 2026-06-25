@@ -1,7 +1,8 @@
 import * as THREE from 'three'
 import Experience from '../Experience.js'
+import ColorBin from './ColorBin.js'
 
-export default class Bin {
+export default class BinManager {
     constructor() {
         this.experience = new Experience()
         this.scene = this.experience.scene
@@ -16,14 +17,14 @@ export default class Bin {
             binRotationX: 0
         }
 
-        // Setup
-        this.resource = this.resources.items.binModel
+        this.originalModel = this.resources.items.binModel.scene
+        this.originalShadow = this.resources.items.binShadowModel.scene
 
-        this.setModel()
+        this.configureBins()
         this.setDebug()
     }
 
-    setModel() {
+    configureBins() {
         const levelData = this.resources.items.levelData
         const dashboard = levelData.dashboard || {}
         
@@ -98,38 +99,34 @@ export default class Bin {
                     binsLeft--
                 }
             }
-            plansByColor[c] = capacities.map(cap => c)
+            plansByColor[c] = capacities.map(cap => ({ colorIndex: c, capacity: cap }))
         }
 
         // 6. Round robin enqueue
-        const binIndices = []
+        const binPlans = []
         let addedPlan
         do {
             addedPlan = false
             for (const c of colorsWithDemand) {
                 if (plansByColor[c] && plansByColor[c].length > 0) {
-                    binIndices.push(plansByColor[c].shift())
+                    binPlans.push(plansByColor[c].shift())
                     addedPlan = true
                 }
             }
         } while(addedPlan)
 
-        this.originalModel = this.resource.scene
-        this.originalShadow = this.resources.items.binShadowModel.scene
         this.binsGroup = new THREE.Group()
         this.spawnedBins = []
         
         let index = 0
-        for (const colorIndex of binIndices) {
-            const palColor = palette[colorIndex]
+        for (const plan of binPlans) {
+            const palColor = palette[plan.colorIndex]
             if (!palColor) continue
-
-            const binClone = this.originalModel.clone()
             
             const color = new THREE.Color()
             if (palColor.r !== undefined) {
                 color.setRGB(palColor.r, palColor.g, palColor.b)
-                color.convertSRGBToLinear() // Ensure correct display color
+                color.convertSRGBToLinear()
             } else if (typeof palColor === 'string') {
                 let hexStr = palColor.startsWith('#') ? palColor : '#' + palColor
                 color.set(hexStr)
@@ -137,49 +134,19 @@ export default class Bin {
                 color.setHex(0xffffff)
             }
 
-            binClone.traverse((child) => {
-                if (child instanceof THREE.Mesh) {
-                    child.castShadow = true
-                    child.receiveShadow = true
-                    if (child.material) {
-                        child.material = child.material.clone()
-                        child.material.color = color
-                    }
-                }
-            })
-
-            const shadowClone = this.originalShadow.clone()
-            shadowClone.position.set(0, this.debugSettings.shadowY, 0)
-            shadowClone.traverse((child) => {
-                if (child instanceof THREE.Mesh) {
-                    child.castShadow = false
-                    child.receiveShadow = true
-                    if (child.material) {
-                        child.material = child.material.clone()
-                        child.material.transparent = true
-                        child.material.alphaTest = 0
-                        child.material.needsUpdate = true
-                    }
-                }
-            })
-
-            const binGroup = new THREE.Group()
-            binGroup.add(shadowClone)
-            binGroup.add(binClone)
+            const colorBin = new ColorBin(this.originalModel, this.originalShadow, plan.colorIndex, color, plan.capacity)
 
             // Unity logic: round-robin into rows, then queue backwards
             const rIndex = index % this.activeBinCount
             const queueIndex = Math.floor(index / this.activeBinCount)
 
             this.spawnedBins.push({
-                group: binGroup,
-                bin: binClone,
-                shadow: shadowClone,
+                colorBin: colorBin,
                 rIndex: rIndex,
                 queueIndex: queueIndex
             })
             
-            this.binsGroup.add(binGroup)
+            this.binsGroup.add(colorBin.group)
             index++
         }
 
@@ -197,13 +164,13 @@ export default class Bin {
         for (const item of this.spawnedBins) {
             const posX = startX + (item.rIndex * this.debugSettings.rowSpacing)
             const posZ = item.queueIndex * this.debugSettings.queueSpacing
-            item.group.position.set(posX, 0, posZ)
+            item.colorBin.setPosition(posX, 0, posZ)
 
-            item.shadow.position.y = this.debugSettings.shadowY
-            item.bin.rotation.x = this.debugSettings.binRotationX
+            item.colorBin.setShadowY(this.debugSettings.shadowY)
+            item.colorBin.setRotationX(this.debugSettings.binRotationX)
             
             // Only render 2 rows at a time (queueIndex 0 and 1)
-            item.group.visible = item.queueIndex < 2
+            item.colorBin.setVisible(item.queueIndex < 2)
         }
     }
 
