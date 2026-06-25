@@ -10,13 +10,13 @@ export default class VoxelLevel {
 
         // Outer group handles the horizontal turntable spinning
         this.spinGroup = new THREE.Group()
-        this.spinGroup.position.set(0, 3.5, 0)
+        this.spinGroup.position.set(0, 3, 0)
         this.scene.add(this.spinGroup)
 
         // Inner container handles the permanent tilt/scale of the model
         this.container = new THREE.Group()
         this.container.scale.set(0.335, 0.335, 0.335)
-        this.container.rotation.set(-2.10959265358979, -0.642592653589793, -1.26059265358979)
+        this.container.rotation.set(-2.10, -0.64, -1.26)
         this.spinGroup.add(this.container)
 
         // Debug

@@ -14,4 +14,19 @@ export default [
         type: 'gltfModel',
         path: 'models/cube.glb'
     },
+    {
+        name: 'rouletteShadowModel',
+        type: 'gltfModel',
+        path: 'models/roulette-shadow.glb'
+    },
+    {
+        name: 'binModel',
+        type: 'gltfModel',
+        path: 'models/bin.glb'
+    },
+    {
+        name: 'binShadowModel',
+        type: 'gltfModel',
+        path: 'models/bin-shadow.glb'
+    }
 ]
