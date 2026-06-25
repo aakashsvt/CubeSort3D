@@ -23,7 +23,7 @@ export default class Roulette {
             }
         })
 
-        this.model.position.set(0, -2.5, 0)
+        this.model.position.set(0, -1.5, 0)
         this.model.scale.set(2, 2, 2)
         this.scene.add(this.model)
     }
