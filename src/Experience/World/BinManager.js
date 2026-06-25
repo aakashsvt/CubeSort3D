@@ -13,7 +13,7 @@ export default class BinManager {
             scale: 2,
             rowSpacing: 0.5,
             queueSpacing: 0.5,
-            shadowY: -0.016,
+            shadowY: 0,
             binRotationX: 0
         }
 
@@ -102,18 +102,25 @@ export default class BinManager {
             plansByColor[c] = capacities.map(cap => ({ colorIndex: c, capacity: cap }))
         }
 
-        // 6. Round robin enqueue
+        // 6. Round robin enqueue (or explicit queue)
         const binPlans = []
-        let addedPlan
-        do {
-            addedPlan = false
-            for (const c of colorsWithDemand) {
-                if (plansByColor[c] && plansByColor[c].length > 0) {
-                    binPlans.push(plansByColor[c].shift())
-                    addedPlan = true
+        if (dashboard.binQueue && dashboard.binQueue.length > 0) {
+            // Use explicit authored queue if available
+            dashboard.binQueue.forEach(c => {
+                binPlans.push({ colorIndex: c, capacity: maxCapacity }) // simplified capacity for visual
+            })
+        } else {
+            let addedPlan
+            do {
+                addedPlan = false
+                for (const c of colorsWithDemand) {
+                    if (plansByColor[c] && plansByColor[c].length > 0) {
+                        binPlans.push(plansByColor[c].shift())
+                        addedPlan = true
+                    }
                 }
-            }
-        } while(addedPlan)
+            } while(addedPlan)
+        }
 
         this.binsGroup = new THREE.Group()
         this.spawnedBins = []

@@ -21,16 +21,28 @@ export default class ColorBin {
     }
 
     applyColor(color) {
+        this.proxyCubes = []
+
         this.binClone.traverse((child) => {
             if (child instanceof THREE.Mesh) {
                 child.castShadow = true
                 child.receiveShadow = true
+                
+                // If it's one of the internal filling cubes (Cube001, Cube002, etc.)
+                if (child.name.startsWith('Cube')) {
+                    child.visible = false
+                    this.proxyCubes.push(child)
+                }
+
                 if (child.material) {
                     child.material = child.material.clone()
                     child.material.color = color
                 }
             }
         })
+        
+        // Ensure proxy cubes are sorted numerically if we want to reveal them in order later
+        this.proxyCubes.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
     }
 
     setupShadow() {
