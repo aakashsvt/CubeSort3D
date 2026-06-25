@@ -8,16 +8,21 @@ export default class VoxelLevel {
         this.resources = this.experience.resources
         this.debug = this.experience.debug
 
+        // Outer group handles the horizontal turntable spinning
+        this.spinGroup = new THREE.Group()
+        this.spinGroup.position.set(0, 3.5, 0)
+        this.scene.add(this.spinGroup)
+
+        // Inner container handles the permanent tilt/scale of the model
         this.container = new THREE.Group()
-        this.container.position.set(0, 1.5, 0)
         this.container.scale.set(0.3, 0.3, 0.3)
         this.container.rotation.set(-1.106, -0.411, -0.952)
-        this.scene.add(this.container)
+        this.spinGroup.add(this.container)
 
         // Debug
         if (this.debug.active) {
             this.debugFolder = this.debug.ui.addFolder('voxelLevel')
-            
+
             this.debugFolder.add(this.container.rotation, 'x').min(-Math.PI).max(Math.PI).step(0.001).name('rotationX')
             this.debugFolder.add(this.container.rotation, 'y').min(-Math.PI).max(Math.PI).step(0.001).name('rotationY')
             this.debugFolder.add(this.container.rotation, 'z').min(-Math.PI).max(Math.PI).step(0.001).name('rotationZ')
@@ -93,7 +98,7 @@ export default class VoxelLevel {
                     material = material[0].clone()
                 }
                 material.vertexColors = false
-                
+
                 if (material.map) {
                     material.map.colorSpace = THREE.SRGBColorSpace
                 }
@@ -223,9 +228,5 @@ export default class VoxelLevel {
     destroy() {
         this.clear()
         this.scene.remove(this.container)
-    }
-
-    update() {
-        // Future game logic (e.g., handling selected/moving cubes)
     }
 }

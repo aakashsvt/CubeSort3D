@@ -1,5 +1,6 @@
 import Experience from '../Experience.js'
 import VoxelLevel from './VoxelLevel.js'
+import VoxelControls from './VoxelControls.js'
 import Roulette from './Roulette.js'
 import Environment from './Environment.js'
 
@@ -17,6 +18,8 @@ export default class World
         {
             
             this.voxelLevel = new VoxelLevel()
+            this.voxelControls = new VoxelControls(this.voxelLevel.spinGroup)
+            
             this.roulette = new Roulette()
             this.environment = new Environment()
         })
@@ -24,7 +27,8 @@ export default class World
 
     update()
     {
-        if(this.voxelLevel) this.voxelLevel.update()
+        if(this.voxelLevel) this.voxelLevel.update?.()
+        if(this.voxelControls) this.voxelControls.update()
         if(this.roulette) this.roulette.update()
     }
 }
