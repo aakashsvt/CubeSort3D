@@ -18,12 +18,11 @@ export default class Environment
 
         this.setAmbientLight()
         this.setSunLight()
-        this.setEnvironmentMap()
     }
 
     setAmbientLight()
     {
-        this.ambientLight = new THREE.AmbientLight('#ffffff', 0.2)
+        this.ambientLight = new THREE.AmbientLight('#ffffff', 0.4)
         this.scene.add(this.ambientLight)
 
         // Debug
@@ -81,39 +80,4 @@ export default class Environment
         }
     }
 
-    setEnvironmentMap()
-    {
-        this.environmentMap = {}
-        this.environmentMap.intensity = 0
-        this.environmentMap.texture = this.resources.items.environmentMapTexture
-        this.environmentMap.texture.colorSpace = THREE.SRGBColorSpace
-        
-        this.scene.environment = this.environmentMap.texture
-
-        this.environmentMap.updateMaterials = () =>
-        {
-            this.scene.traverse((child) =>
-            {
-                if(child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial)
-                {
-                    child.material.envMap = this.environmentMap.texture
-                    child.material.envMapIntensity = this.environmentMap.intensity
-                    child.material.needsUpdate = true
-                }
-            })
-        }
-        this.environmentMap.updateMaterials()
-
-        // Debug
-        if(this.debug.active)
-        {
-            this.debugFolder
-                .add(this.environmentMap, 'intensity')
-                .name('envMapIntensity')
-                .min(0)
-                .max(4)
-                .step(0.001)
-                .onChange(this.environmentMap.updateMaterials)
-        }
-    }
 }

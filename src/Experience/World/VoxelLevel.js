@@ -121,6 +121,11 @@ export default class VoxelLevel {
             geometry.scale(scaleFactor, scaleFactor, scaleFactor)
         }
 
+        material.roughness = 1
+        material.metalness = 0
+        material.transmission = 0.2
+        material.needsUpdate = true
+
         this.instancedMesh = new THREE.InstancedMesh(geometry, material, cubesData.length)
         this.instancedMesh.castShadow = false
         this.instancedMesh.receiveShadow = false
@@ -173,6 +178,26 @@ export default class VoxelLevel {
         this.instancedMesh.instanceColor.needsUpdate = true
 
         this.container.add(this.instancedMesh)
+
+        // Material debug
+        if (this.debug && this.debug.active && !this.materialDebugFolder) {
+            this.materialDebugFolder = this.debugFolder.addFolder('Material')
+            const getMat = () => this.instancedMesh && this.instancedMesh.material
+            this.materialSettings = {
+                get roughness() { const m = getMat(); return m && m.roughness !== undefined ? m.roughness : 1 },
+                set roughness(v) { const m = getMat(); if(m && m.roughness !== undefined) { m.roughness = v; m.needsUpdate = true; } },
+                get metalness() { const m = getMat(); return m && m.metalness !== undefined ? m.metalness : 0 },
+                set metalness(v) { const m = getMat(); if(m && m.metalness !== undefined) { m.metalness = v; m.needsUpdate = true; } },
+                get transmission() { const m = getMat(); return m && m.transmission !== undefined ? m.transmission : 0.2 },
+                set transmission(v) { const m = getMat(); if(m && m.transmission !== undefined) { m.transmission = v; m.needsUpdate = true; } },
+                get clearcoat() { const m = getMat(); return m && m.clearcoat !== undefined ? m.clearcoat : 0 },
+                set clearcoat(v) { const m = getMat(); if(m && m.clearcoat !== undefined) { m.clearcoat = v; m.needsUpdate = true; } }
+            }
+            this.materialDebugFolder.add(this.materialSettings, 'roughness').min(0).max(1).step(0.001)
+            this.materialDebugFolder.add(this.materialSettings, 'metalness').min(0).max(1).step(0.001)
+            this.materialDebugFolder.add(this.materialSettings, 'transmission').min(0).max(1).step(0.001)
+            this.materialDebugFolder.add(this.materialSettings, 'clearcoat').min(0).max(1).step(0.001)
+        }
 
         // Debug mode
         if (this.debug && this.debug.active) {
