@@ -38,8 +38,9 @@ coverage/
 *.tmp
 *.temp
 
-# C# scripts
+# C# scripts and Unity metas
 *.cs
+*.meta
 
 # Optional Blender backups
 *.blend1
