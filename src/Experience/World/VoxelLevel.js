@@ -15,8 +15,8 @@ export default class VoxelLevel {
 
         // Inner container handles the permanent tilt/scale of the model
         this.container = new THREE.Group()
-        this.container.scale.set(0.3, 0.3, 0.3)
-        this.container.rotation.set(-1.106, -0.411, -0.952)
+        this.container.scale.set(0.335, 0.335, 0.335)
+        this.container.rotation.set(-2.10959265358979, -0.642592653589793, -1.26059265358979)
         this.spinGroup.add(this.container)
 
         // Debug
