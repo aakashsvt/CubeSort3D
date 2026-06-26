@@ -17,8 +17,9 @@ export default class Roulette {
 
     setModel() {
         this.group = new THREE.Group()
-        this.group.position.set(0, -0.7, 0)
-        this.group.scale.set(2, 2, 2)
+        this.group.position.set(0, -0.7, -1.5)
+        this.group.rotation.set(0.09, 0, 0)
+        this.group.scale.set(2.15, 2.15, 2.15)
         this.scene.add(this.group)
 
         this.model = this.resource.scene
@@ -69,7 +70,17 @@ export default class Roulette {
         this.debug = this.experience.debug
         if (this.debug.active) {
             this.debugFolder = this.debug.ui.addFolder('Roulette')
+            
+            const scaleParams = { groupScale: 2.15, modelScale: 1 }
+            this.debugFolder.add(scaleParams, 'groupScale').min(0.1).max(10).step(0.01).name('Group Scale').onChange((val) => {
+                this.group.scale.set(val, val, val)
+            })
+            this.debugFolder.add(scaleParams, 'modelScale').min(0.1).max(10).step(0.01).name('Model Scale').onChange((val) => {
+                this.model.scale.set(val, val, val)
+            })
+            
             this.debugFolder.add(this.group.position, 'y').min(-5).max(5).step(0.01).name('Group Pos Y')
+            this.debugFolder.add(this.group.position, 'z').min(-5).max(5).step(0.01).name('Group Pos Z')
             this.debugFolder.add(this.group.rotation, 'x').min(-Math.PI).max(Math.PI).step(0.01).name('Group Rot X')
             
             const shadowFolder = this.debugFolder.addFolder('Shadow')

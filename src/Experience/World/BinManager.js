@@ -17,7 +17,7 @@ export default class BinManager {
             groupRotX: 0.45,
             groupRotY: 0,
             groupRotZ: 0,
-            rowSpacing: 0.3,
+            rowSpacing: 0.32,
             queueSpacing: 0.45,
             shadowX: 0,
             shadowY: 0.009,
