@@ -24,6 +24,8 @@ export default class VoxelControls {
         }
         
         this.staggerDelay = 30
+        this.spawnQueue = []
+        this.spawnTimer = 0
 
         this.setDebug()
         this.setInteraction()
@@ -132,15 +134,14 @@ export default class VoxelControls {
                     const visualScale = scale.x
                     const colliderSize = this.voxelLevel.cubeSize * scale.x
 
-                    setTimeout(() => {
-                        // Hide in static mesh right before falling
-                        this.voxelLevel.instancedMesh.setMatrixAt(c.instanceId, dummy.matrix)
-                        this.voxelLevel.instancedMesh.instanceMatrix.needsUpdate = true
-                        
-                        this.physicsWorld.spawnCube(position, quaternion, color, visualScale, colliderSize)
-                    }, delay)
-                    
-                    delay += this.staggerDelay // Stagger from debug UI
+                    this.spawnQueue.push({
+                        instanceId: c.instanceId,
+                        position: position,
+                        quaternion: quaternion,
+                        color: color,
+                        visualScale: visualScale,
+                        colliderSize: colliderSize
+                    })
                 } else {
                     this.voxelLevel.instancedMesh.setMatrixAt(c.instanceId, dummy.matrix)
                 }
@@ -157,6 +158,29 @@ export default class VoxelControls {
         if (this.targetGroup) {
             // Apply damping for smooth momentum feel
             this.targetGroup.rotation.y += (this.touch.targetRotationY - this.targetGroup.rotation.y) * this.touch.dampingFactor
+        }
+
+        if (this.spawnQueue.length > 0 && this.physicsWorld) {
+            this.spawnTimer += this.experience.time.delta
+
+            while (this.spawnQueue.length > 0 && this.spawnTimer >= this.staggerDelay) {
+                if (this.staggerDelay > 0) {
+                    this.spawnTimer -= this.staggerDelay
+                } else {
+                    this.spawnTimer = 0
+                }
+
+                const item = this.spawnQueue.shift()
+
+                const dummy = new THREE.Object3D()
+                dummy.scale.set(0, 0, 0)
+                dummy.updateMatrix()
+                
+                this.voxelLevel.instancedMesh.setMatrixAt(item.instanceId, dummy.matrix)
+                this.voxelLevel.instancedMesh.instanceMatrix.needsUpdate = true
+                
+                this.physicsWorld.spawnCube(item.position, item.quaternion, item.color, item.visualScale, item.colliderSize)
+            }
         }
     }
 }

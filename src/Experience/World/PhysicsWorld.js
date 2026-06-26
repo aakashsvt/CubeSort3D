@@ -57,8 +57,16 @@ export default class PhysicsWorld {
                 matrix.copy(child.matrixWorld)
                 
                 const groupInverse = new THREE.Matrix4().copy(rouletteGroup.matrixWorld).invert()
-                matrix.premultiply(groupInverse)
-                geometry.applyMatrix4(matrix)
+                matrix.premultiply(groupInverse) // Now matrix is purely local
+
+                // Bake the group's scale into the geometry since Rapier colliders don't scale dynamically
+                const scaleMatrix = new THREE.Matrix4().makeScale(
+                    rouletteGroup.scale.x,
+                    rouletteGroup.scale.y,
+                    rouletteGroup.scale.z
+                )
+                scaleMatrix.multiply(matrix)
+                geometry.applyMatrix4(scaleMatrix)
 
                 const positionAttribute = geometry.attributes.position
                 let vertices = positionAttribute.array
