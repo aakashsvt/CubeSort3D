@@ -1,78 +1,56 @@
 import * as THREE from 'three'
-import Experience from '../Experience.js'
+
+const dummy = new THREE.Object3D()
 
 export default class ColorBin {
-    constructor(originalModel, originalShadow, colorIndex, color, capacity) {
-        this.experience = new Experience()
-        
+    constructor(instanceIndex, colorIndex, color, capacity) {
+        this.instanceIndex = instanceIndex
         this.colorIndex = colorIndex
         this.capacity = capacity
+        this.color = color
         
-        this.binClone = originalModel.clone()
-        this.shadowClone = originalShadow.clone()
-        
-        this.group = new THREE.Group()
+        this.position = new THREE.Vector3()
+        this.rotationX = 0
+        this.shadowY = 0
+        this.visible = true
 
-        this.applyColor(color)
-        this.setupShadow()
-
-        this.group.add(this.shadowClone)
-        this.group.add(this.binClone)
-    }
-
-    applyColor(color) {
-        this.proxyCubes = []
-
-        this.binClone.traverse((child) => {
-            if (child instanceof THREE.Mesh) {
-                child.castShadow = true
-                child.receiveShadow = true
-                
-                // If it's one of the internal filling cubes (Cube001, Cube002, etc.)
-                if (child.name.startsWith('Cube')) {
-                    child.visible = false
-                    this.proxyCubes.push(child)
-                }
-
-                if (child.material) {
-                    child.material = child.material.clone()
-                    child.material.color = color
-                }
-            }
-        })
-        
-        // Ensure proxy cubes are sorted numerically if we want to reveal them in order later
-        this.proxyCubes.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
-    }
-
-    setupShadow() {
-        this.shadowClone.traverse((child) => {
-            if (child instanceof THREE.Mesh) {
-                child.castShadow = false
-                child.receiveShadow = true
-                if (child.material) {
-                    child.material = child.material.clone()
-                    child.material.transparent = true
-                    child.material.alphaTest = 0
-                    child.material.needsUpdate = true
-                }
-            }
-        })
+        this.matrix = new THREE.Matrix4()
+        this.shadowMatrix = new THREE.Matrix4()
     }
 
     setPosition(x, y, z) {
-        this.group.position.set(x, y, z)
+        this.position.set(x, y, z)
     }
 
     setShadowY(y) {
-        this.shadowClone.position.y = y
+        this.shadowY = y
     }
 
     setRotationX(rotX) {
-        this.binClone.rotation.x = rotX
+        this.rotationX = rotX
     }
 
     setVisible(visible) {
-        this.group.visible = visible
+        this.visible = visible
+    }
+
+    updateMatrices() {
+        if (this.visible) {
+            dummy.position.copy(this.position)
+            dummy.rotation.x = this.rotationX
+            dummy.scale.set(1, 1, 1)
+            dummy.updateMatrix()
+            this.matrix.copy(dummy.matrix)
+
+            dummy.rotation.x = 0
+            dummy.position.y = this.shadowY
+            dummy.updateMatrix()
+            this.shadowMatrix.copy(dummy.matrix)
+        } else {
+            dummy.scale.set(0, 0, 0)
+            dummy.updateMatrix()
+            this.matrix.copy(dummy.matrix)
+            this.shadowMatrix.copy(dummy.matrix)
+        }
     }
 }

@@ -124,7 +124,38 @@ export default class BinManager {
 
         this.binsGroup = new THREE.Group()
         this.spawnedBins = []
+
+        const maxInstances = binPlans.length;
         
+        this.binInstancedMeshes = [];
+        this.originalModel.traverse((child) => {
+            if (child instanceof THREE.Mesh && !child.name.startsWith('Cube')) {
+                const material = child.material.clone()
+                const instancedMesh = new THREE.InstancedMesh(child.geometry, material, maxInstances)
+                instancedMesh.castShadow = true
+                instancedMesh.receiveShadow = true
+                instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+                this.binInstancedMeshes.push(instancedMesh)
+                this.binsGroup.add(instancedMesh)
+            }
+        });
+
+        this.shadowInstancedMeshes = [];
+        this.originalShadow.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+                const material = child.material.clone()
+                material.transparent = true
+                material.alphaTest = 0
+                
+                const instancedMesh = new THREE.InstancedMesh(child.geometry, material, maxInstances)
+                instancedMesh.castShadow = false
+                instancedMesh.receiveShadow = true
+                instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+                this.shadowInstancedMeshes.push(instancedMesh)
+                this.binsGroup.add(instancedMesh)
+            }
+        });
+
         let index = 0
         for (const plan of binPlans) {
             const palColor = palette[plan.colorIndex]
@@ -141,7 +172,11 @@ export default class BinManager {
                 color.setHex(0xffffff)
             }
 
-            const colorBin = new ColorBin(this.originalModel, this.originalShadow, plan.colorIndex, color, plan.capacity)
+            const colorBin = new ColorBin(index, plan.colorIndex, color, plan.capacity)
+
+            for (const mesh of this.binInstancedMeshes) {
+                mesh.setColorAt(index, color)
+            }
 
             // Unity logic: round-robin into rows, then queue backwards
             const rIndex = index % this.activeBinCount
@@ -153,8 +188,16 @@ export default class BinManager {
                 queueIndex: queueIndex
             })
             
-            this.binsGroup.add(colorBin.group)
             index++
+        }
+
+        const actualCount = index;
+        for (const mesh of this.binInstancedMeshes) {
+            mesh.count = actualCount;
+            if(actualCount > 0) mesh.instanceColor.needsUpdate = true;
+        }
+        for (const mesh of this.shadowInstancedMeshes) {
+            mesh.count = actualCount;
         }
 
         this.binsGroup.scale.set(this.debugSettings.scale, this.debugSettings.scale, this.debugSettings.scale)
@@ -178,6 +221,23 @@ export default class BinManager {
             
             // Only render 2 rows at a time (queueIndex 0 and 1)
             item.colorBin.setVisible(item.queueIndex < 2)
+            
+            item.colorBin.updateMatrices()
+
+            const i = item.colorBin.instanceIndex;
+            for (const mesh of this.binInstancedMeshes) {
+                mesh.setMatrixAt(i, item.colorBin.matrix)
+            }
+            for (const mesh of this.shadowInstancedMeshes) {
+                mesh.setMatrixAt(i, item.colorBin.shadowMatrix)
+            }
+        }
+
+        for (const mesh of this.binInstancedMeshes) {
+            mesh.instanceMatrix.needsUpdate = true
+        }
+        for (const mesh of this.shadowInstancedMeshes) {
+            mesh.instanceMatrix.needsUpdate = true
         }
     }
 
