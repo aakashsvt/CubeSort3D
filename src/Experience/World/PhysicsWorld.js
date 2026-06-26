@@ -15,8 +15,11 @@ export default class PhysicsWorld {
         this.physicsParams = {
             gravity: -9.81,
             restitution: 0.1,
-            friction: 0.6
+            friction: 0.6,
+            debugRender: false
         }
+        
+        this.debugLines = null
         
         this.setDebug()
         this.init()
@@ -31,6 +34,21 @@ export default class PhysicsWorld {
             })
             this.debugFolder.add(this.physicsParams, 'restitution').min(0).max(1).step(0.01).name('Bounciness')
             this.debugFolder.add(this.physicsParams, 'friction').min(0).max(2).step(0.01).name('Friction')
+            
+            this.debugFolder.add(this.physicsParams, 'debugRender').name('Show Colliders').onChange((v) => {
+                if (v) {
+                    if (!this.debugLines) {
+                        const material = new THREE.LineBasicMaterial({ vertexColors: true, depthTest: false })
+                        const geometry = new THREE.BufferGeometry()
+                        this.debugLines = new THREE.LineSegments(geometry, material)
+                        this.debugLines.renderOrder = 999 // Render on top of everything
+                        this.scene.add(this.debugLines)
+                    }
+                    this.debugLines.visible = true
+                } else if (this.debugLines) {
+                    this.debugLines.visible = false
+                }
+            })
         }
     }
 
@@ -88,6 +106,15 @@ export default class PhysicsWorld {
                 this.world.createCollider(colliderDesc, this.rouletteBody)
             }
         })
+    }
+
+    updateRouletteBody(rouletteGroup, rouletteModel) {
+        if (!this.world) return
+        if (this.rouletteBody) {
+            this.world.removeRigidBody(this.rouletteBody)
+            this.rouletteBody = null
+        }
+        this.createRouletteBody(rouletteGroup, rouletteModel)
     }
 
     setupDynamicMesh(geometry, material, maxCubes) {
@@ -149,6 +176,14 @@ export default class PhysicsWorld {
         // Step physics
         this.world.step()
         
+        // Render debug lines
+        if (this.physicsParams.debugRender && this.debugLines) {
+            const buffers = this.world.debugRender()
+            this.debugLines.geometry.setAttribute('position', new THREE.BufferAttribute(buffers.vertices, 3))
+            this.debugLines.geometry.setAttribute('color', new THREE.BufferAttribute(buffers.colors, 4))
+        }
+
+        // Sync dynamic cubes
         if (this.dynamicInstancedMesh && this.dynamicCubes.length > 0) {
             const dummy = new THREE.Object3D()
             for(const item of this.dynamicCubes) {

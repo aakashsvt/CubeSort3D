@@ -11,6 +11,12 @@ export default class Roulette {
         this.resource = this.resources.items.rouletteModel
         this.shadowResource = this.resources.items.rouletteShadowModel
 
+        this.wallParams = {
+            radiusOffset: 0.0,
+            height: 2.0,
+            posY: 0.9
+        }
+
         this.speed = 2
         this.setModel()
         this.setDebug()
@@ -60,6 +66,37 @@ export default class Roulette {
         this.group.add(this.shadowModel)
         this.group.add(this.model)
 
+        // Auto-calculate the exact outer radius of the Roulette model
+        const localBox = new THREE.Box3()
+        this.model.traverse(child => {
+            if (child.isMesh) {
+                child.geometry.computeBoundingBox()
+                const childBox = child.geometry.boundingBox.clone()
+                childBox.applyMatrix4(child.matrix)
+                localBox.union(childBox)
+            }
+        })
+        const size = localBox.getSize(new THREE.Vector3())
+        const center = localBox.getCenter(new THREE.Vector3())
+        const localRouletteRadius = Math.max(size.x, size.z) / 2
+        
+        this.wallParams.radius = localRouletteRadius + this.wallParams.radiusOffset
+
+        this.wallMaterial = new THREE.MeshStandardMaterial({
+            color: 0xff0000,
+            transparent: true,
+            opacity: 0.0, // Invisible by default, but blocks cubes
+            wireframe: true,
+            side: THREE.DoubleSide // Important for physics inside hollow objects
+        })
+
+        this.wallMesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(this.wallParams.radius, this.wallParams.radius, this.wallParams.height, 32, 1, true),
+            this.wallMaterial
+        )
+        this.wallMesh.position.y = this.wallParams.posY
+        this.model.add(this.wallMesh)
+
         if (this.physicsWorld) {
             // Need a tiny delay because PhysicsWorld async init might not have created the Rapier world yet
             setTimeout(() => {
@@ -90,6 +127,27 @@ export default class Roulette {
             this.debugFolder.add(this.group.position, 'y').min(-5).max(5).step(0.01).name('Group Pos Y')
             this.debugFolder.add(this.group.position, 'z').min(-5).max(5).step(0.01).name('Group Pos Z')
             this.debugFolder.add(this.group.rotation, 'x').min(-Math.PI).max(Math.PI).step(0.01).name('Group Rot X')
+            
+            const wallFolder = this.debugFolder.addFolder('Invisible Wall')
+            
+            const updateWallVisuals = () => {
+                if (this.wallMesh) {
+                    this.wallMesh.geometry.dispose()
+                    this.wallMesh.geometry = new THREE.CylinderGeometry(this.wallParams.radius, this.wallParams.radius, this.wallParams.height, 32, 1, true)
+                    this.wallMesh.position.y = this.wallParams.posY
+                }
+            }
+            
+            const updateWallPhysics = () => {
+                if (this.physicsWorld) {
+                    this.physicsWorld.updateRouletteBody(this.group, this.model)
+                }
+            }
+
+            wallFolder.add(this.wallParams, 'radius').min(1).max(10).step(0.01).name('Radius').onChange(updateWallVisuals).onFinishChange(updateWallPhysics)
+            wallFolder.add(this.wallParams, 'height').min(0.1).max(15).step(0.01).name('Height').onChange(updateWallVisuals).onFinishChange(updateWallPhysics)
+            wallFolder.add(this.wallParams, 'posY').min(-5).max(10).step(0.01).name('Height Offset (Y)').onChange(updateWallVisuals).onFinishChange(updateWallPhysics)
+            wallFolder.add(this.wallMaterial, 'opacity').min(0).max(1).step(0.01).name('Debug Opacity')
             
             const shadowFolder = this.debugFolder.addFolder('Shadow')
             shadowFolder.add(this.shadowModel.position, 'x').min(-5).max(5).step(0.001).name('posX')
