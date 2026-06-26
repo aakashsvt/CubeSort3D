@@ -123,7 +123,6 @@ export default class VoxelLevel {
 
         material.roughness = 1
         material.metalness = 0
-        material.transmission = 0.2
         material.needsUpdate = true
 
         this.instancedMesh = new THREE.InstancedMesh(geometry, material, cubesData.length)

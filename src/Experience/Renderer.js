@@ -18,8 +18,9 @@ export default class Renderer
     {
         this.instance = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias: true,
-            alpha: true
+            antialias: window.devicePixelRatio < 2, // Disable MSAA on retina/mobile to save massive GPU fillrate
+            alpha: true,
+            powerPreference: 'high-performance'
         })
         this.instance.toneMapping = THREE.CineonToneMapping
         this.instance.toneMappingExposure = 1.75
