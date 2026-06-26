@@ -10,14 +10,20 @@ export default class BinManager {
         this.debug = this.experience.debug
         
         this.debugSettings = {
-            scale: 2,
-            rowSpacing: 0.5,
-            queueSpacing: 0.5,
+            scale: 2.6,
+            groupPosX: 0,
+            groupPosY: -1.0,
+            groupPosZ: 5,
+            groupRotX: 0.45,
+            groupRotY: 0,
+            groupRotZ: 0,
+            rowSpacing: 0.3,
+            queueSpacing: 0.45,
             shadowX: 0,
             shadowY: 0.009,
-            shadowZ: 0.03,
+            shadowZ: 0.005,
             binRotationX: 0,
-            shadowScaleX: 0.89,
+            shadowScaleX: 0.98,
             shadowScaleY: 1,
             shadowScaleZ: 1,
             shadowAlphaTest: 0,
@@ -139,8 +145,8 @@ export default class BinManager {
             if (child instanceof THREE.Mesh && !child.name.startsWith('Cube')) {
                 const material = child.material.clone()
                 const instancedMesh = new THREE.InstancedMesh(child.geometry, material, maxInstances)
-                instancedMesh.castShadow = true
-                instancedMesh.receiveShadow = true
+                instancedMesh.castShadow = false
+                instancedMesh.receiveShadow = false
                 instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
                 this.binInstancedMeshes.push(instancedMesh)
                 this.binsGroup.add(instancedMesh)
@@ -209,7 +215,8 @@ export default class BinManager {
         }
 
         this.binsGroup.scale.set(this.debugSettings.scale, this.debugSettings.scale, this.debugSettings.scale)
-        this.binsGroup.position.set(0, -1.0, 6)
+        this.binsGroup.position.set(this.debugSettings.groupPosX, this.debugSettings.groupPosY, this.debugSettings.groupPosZ)
+        this.binsGroup.rotation.set(this.debugSettings.groupRotX, this.debugSettings.groupRotY, this.debugSettings.groupRotZ)
 
         this.scene.add(this.binsGroup)
         this.updateLayout() // Initialize layout
@@ -257,8 +264,27 @@ export default class BinManager {
 
         this.debugFolder = this.debug.ui.addFolder('Bins')
         
-        this.debugFolder.add(this.debugSettings, 'scale').min(0.1).max(10).step(0.01).name('Group Scale').onChange((val) => {
+        const groupFolder = this.debugFolder.addFolder('Group Transform')
+        groupFolder.add(this.debugSettings, 'scale').min(0.1).max(10).step(0.01).name('Scale').onChange((val) => {
             this.binsGroup.scale.set(val, val, val)
+        })
+        groupFolder.add(this.debugSettings, 'groupPosX').min(-20).max(20).step(0.01).name('Pos X').onChange((val) => {
+            this.binsGroup.position.x = val
+        })
+        groupFolder.add(this.debugSettings, 'groupPosY').min(-20).max(20).step(0.01).name('Pos Y').onChange((val) => {
+            this.binsGroup.position.y = val
+        })
+        groupFolder.add(this.debugSettings, 'groupPosZ').min(-20).max(20).step(0.01).name('Pos Z').onChange((val) => {
+            this.binsGroup.position.z = val
+        })
+        groupFolder.add(this.debugSettings, 'groupRotX').min(-Math.PI).max(Math.PI).step(0.01).name('Rot X').onChange((val) => {
+            this.binsGroup.rotation.x = val
+        })
+        groupFolder.add(this.debugSettings, 'groupRotY').min(-Math.PI).max(Math.PI).step(0.01).name('Rot Y').onChange((val) => {
+            this.binsGroup.rotation.y = val
+        })
+        groupFolder.add(this.debugSettings, 'groupRotZ').min(-Math.PI).max(Math.PI).step(0.01).name('Rot Z').onChange((val) => {
+            this.binsGroup.rotation.z = val
         })
 
         this.debugFolder.add(this.debugSettings, 'rowSpacing').min(0).max(5).step(0.01).name('Row Spacing').onChange(() => this.updateLayout())

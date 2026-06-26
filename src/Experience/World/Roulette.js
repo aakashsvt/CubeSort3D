@@ -69,6 +69,8 @@ export default class Roulette {
         this.debug = this.experience.debug
         if (this.debug.active) {
             this.debugFolder = this.debug.ui.addFolder('Roulette')
+            this.debugFolder.add(this.group.position, 'y').min(-5).max(5).step(0.01).name('Group Pos Y')
+            this.debugFolder.add(this.group.rotation, 'x').min(-Math.PI).max(Math.PI).step(0.01).name('Group Rot X')
             
             const shadowFolder = this.debugFolder.addFolder('Shadow')
             shadowFolder.add(this.shadowModel.position, 'x').min(-5).max(5).step(0.001).name('posX')

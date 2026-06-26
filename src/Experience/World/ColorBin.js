@@ -49,7 +49,7 @@ export default class ColorBin {
             dummy.updateMatrix()
             this.matrix.copy(dummy.matrix)
 
-            dummy.rotation.x = 0
+            dummy.rotation.x = this.rotationX
             dummy.position.x = this.position.x + this.shadowOffsetX
             dummy.position.y = this.shadowY
             dummy.position.z = this.position.z + this.shadowOffsetZ
