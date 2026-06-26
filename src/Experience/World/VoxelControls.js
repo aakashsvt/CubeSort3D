@@ -61,9 +61,11 @@ export default class VoxelControls {
 
                 this.touch.previousX = event.clientX
                 
-                // Normalize by screen width so mobile and PC rotate the exact same amount
-                const normalizedDelta = deltaX / window.innerWidth
-                this.touch.targetRotationY += normalizedDelta * this.touch.rotationSpeed
+                // Only rotate the voxel group if OrbitControls is disabled
+                if (!this.experience.camera.controls?.enabled) {
+                    const normalizedDelta = deltaX / window.innerWidth
+                    this.touch.targetRotationY += normalizedDelta * this.touch.rotationSpeed
+                }
             }
         }, { passive: false })
 
