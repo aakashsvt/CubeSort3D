@@ -13,8 +13,14 @@ export default class BinManager {
             scale: 2,
             rowSpacing: 0.5,
             queueSpacing: 0.5,
-            shadowY: 0,
-            binRotationX: 0
+            shadowX: 0,
+            shadowY: 0.01,
+            shadowZ: 0.03,
+            binRotationX: 0,
+            shadowScaleX: 0.89,
+            shadowScaleY: 1,
+            shadowScaleZ: 1,
+            shadowAlphaTest: 0
         }
 
         this.originalModel = this.resources.items.binModel.scene
@@ -216,7 +222,10 @@ export default class BinManager {
             const posZ = item.queueIndex * this.debugSettings.queueSpacing
             item.colorBin.setPosition(posX, 0, posZ)
 
+            item.colorBin.shadowOffsetX = this.debugSettings.shadowX
             item.colorBin.setShadowY(this.debugSettings.shadowY)
+            item.colorBin.shadowOffsetZ = this.debugSettings.shadowZ
+            item.colorBin.setShadowScale(this.debugSettings.shadowScaleX, this.debugSettings.shadowScaleY, this.debugSettings.shadowScaleZ)
             item.colorBin.setRotationX(this.debugSettings.binRotationX)
             
             // Only render 2 rows at a time (queueIndex 0 and 1)
@@ -252,7 +261,18 @@ export default class BinManager {
 
         this.debugFolder.add(this.debugSettings, 'rowSpacing').min(0).max(5).step(0.01).name('Row Spacing').onChange(() => this.updateLayout())
         this.debugFolder.add(this.debugSettings, 'queueSpacing').min(0).max(5).step(0.01).name('Queue Spacing').onChange(() => this.updateLayout())
+        this.debugFolder.add(this.debugSettings, 'shadowX').min(-1).max(1).step(0.001).name('Shadow Pos X').onChange(() => this.updateLayout())
         this.debugFolder.add(this.debugSettings, 'shadowY').min(-1).max(1).step(0.001).name('Shadow Pos Y').onChange(() => this.updateLayout())
+        this.debugFolder.add(this.debugSettings, 'shadowZ').min(-1).max(1).step(0.001).name('Shadow Pos Z').onChange(() => this.updateLayout())
         this.debugFolder.add(this.debugSettings, 'binRotationX').min(-Math.PI).max(Math.PI).step(0.01).name('Bin Rotation X').onChange(() => this.updateLayout())
+        this.debugFolder.add(this.debugSettings, 'shadowScaleX').min(0.1).max(5).step(0.01).name('Shadow Scale X').onChange(() => this.updateLayout())
+        this.debugFolder.add(this.debugSettings, 'shadowScaleY').min(0.1).max(5).step(0.01).name('Shadow Scale Y').onChange(() => this.updateLayout())
+        this.debugFolder.add(this.debugSettings, 'shadowScaleZ').min(0.1).max(5).step(0.01).name('Shadow Scale Z').onChange(() => this.updateLayout())
+        this.debugFolder.add(this.debugSettings, 'shadowAlphaTest').min(0).max(1).step(0.01).name('Shadow AlphaTest').onChange((val) => {
+            for (const mesh of this.shadowInstancedMeshes) {
+                mesh.material.alphaTest = val
+                mesh.material.needsUpdate = true
+            }
+        })
     }
 }

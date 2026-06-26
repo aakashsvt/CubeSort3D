@@ -12,6 +12,7 @@ export default class Roulette {
 
         this.speed = 2
         this.setModel()
+        this.setDebug()
     }
 
     setModel() {
@@ -38,7 +39,8 @@ export default class Roulette {
         })
 
         this.shadowModel = this.shadowResource.scene
-        this.shadowModel.position.set(0, -0.016, 0)
+        this.shadowModel.position.set(0, -0.016, 0.05)
+        this.shadowModel.scale.set(0.99, 1, 1)
 
         this.shadowModel.traverse((child) => {
             if (child instanceof THREE.Mesh) {
@@ -59,6 +61,32 @@ export default class Roulette {
     update() {
         if (this.model) {
             this.model.rotation.y += (this.time.delta / 1000) * this.speed
+        }
+    }
+
+    setDebug() {
+        this.debug = this.experience.debug
+        if (this.debug.active) {
+            this.debugFolder = this.debug.ui.addFolder('Roulette')
+            
+            const shadowFolder = this.debugFolder.addFolder('Shadow')
+            shadowFolder.add(this.shadowModel.position, 'x').min(-5).max(5).step(0.001).name('posX')
+            shadowFolder.add(this.shadowModel.position, 'y').min(-5).max(5).step(0.001).name('posY')
+            shadowFolder.add(this.shadowModel.position, 'z').min(-5).max(5).step(0.001).name('posZ')
+            
+            shadowFolder.add(this.shadowModel.scale, 'x').min(0.1).max(10).step(0.01).name('scaleX')
+            shadowFolder.add(this.shadowModel.scale, 'y').min(0.1).max(10).step(0.01).name('scaleY')
+            shadowFolder.add(this.shadowModel.scale, 'z').min(0.1).max(10).step(0.01).name('scaleZ')
+
+            const shadowParams = { alphaTest: 0 }
+            shadowFolder.add(shadowParams, 'alphaTest').min(0).max(1).step(0.01).name('AlphaTest').onChange((val) => {
+                this.shadowModel.traverse((child) => {
+                    if (child instanceof THREE.Mesh && child.material) {
+                        child.material.alphaTest = val
+                        child.material.needsUpdate = true
+                    }
+                })
+            })
         }
     }
 }

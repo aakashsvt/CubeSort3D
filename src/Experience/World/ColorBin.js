@@ -11,7 +11,10 @@ export default class ColorBin {
         
         this.position = new THREE.Vector3()
         this.rotationX = 0
+        this.shadowOffsetX = 0
         this.shadowY = 0
+        this.shadowOffsetZ = 0
+        this.shadowScale = new THREE.Vector3(1, 1, 1)
         this.visible = true
 
         this.matrix = new THREE.Matrix4()
@@ -24,6 +27,10 @@ export default class ColorBin {
 
     setShadowY(y) {
         this.shadowY = y
+    }
+
+    setShadowScale(x, y, z) {
+        this.shadowScale.set(x, y, z)
     }
 
     setRotationX(rotX) {
@@ -43,7 +50,10 @@ export default class ColorBin {
             this.matrix.copy(dummy.matrix)
 
             dummy.rotation.x = 0
+            dummy.position.x = this.position.x + this.shadowOffsetX
             dummy.position.y = this.shadowY
+            dummy.position.z = this.position.z + this.shadowOffsetZ
+            dummy.scale.copy(this.shadowScale)
             dummy.updateMatrix()
             this.shadowMatrix.copy(dummy.matrix)
         } else {
