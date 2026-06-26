@@ -60,6 +60,9 @@ export default class Experience
 
     update()
     {
+        if(this.debug)
+            this.debug.update()
+
         this.camera.update()
         this.world.update()
         this.renderer.update()
@@ -95,7 +98,7 @@ export default class Experience
         this.camera.controls.dispose()
         this.renderer.instance.dispose()
 
-        if(this.debug.active)
-            this.debug.ui.destroy()
+        if(this.debug)
+            this.debug.destroy()
     }
 }
