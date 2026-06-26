@@ -18,7 +18,7 @@ export default class Renderer
     {
         this.instance = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias: true, // Disable MSAA on retina/mobile to save massive GPU fillrate
+            antialias: true, 
             alpha: true,
             powerPreference: 'high-performance'
         })
