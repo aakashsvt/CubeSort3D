@@ -14,13 +14,14 @@ export default class BinManager {
             rowSpacing: 0.5,
             queueSpacing: 0.5,
             shadowX: 0,
-            shadowY: 0.01,
+            shadowY: 0.009,
             shadowZ: 0.03,
             binRotationX: 0,
             shadowScaleX: 0.89,
             shadowScaleY: 1,
             shadowScaleZ: 1,
-            shadowAlphaTest: 0
+            shadowAlphaTest: 0,
+            shadowOpacity: 0.66
         }
 
         this.originalModel = this.resources.items.binModel.scene
@@ -152,6 +153,7 @@ export default class BinManager {
                 const material = child.material.clone()
                 material.transparent = true
                 material.alphaTest = 0
+                material.opacity = 0.66
                 
                 const instancedMesh = new THREE.InstancedMesh(child.geometry, material, maxInstances)
                 instancedMesh.castShadow = false
@@ -271,6 +273,12 @@ export default class BinManager {
         this.debugFolder.add(this.debugSettings, 'shadowAlphaTest').min(0).max(1).step(0.01).name('Shadow AlphaTest').onChange((val) => {
             for (const mesh of this.shadowInstancedMeshes) {
                 mesh.material.alphaTest = val
+                mesh.material.needsUpdate = true
+            }
+        })
+        this.debugFolder.add(this.debugSettings, 'shadowOpacity').min(0).max(1).step(0.01).name('Shadow Opacity').onChange((val) => {
+            for (const mesh of this.shadowInstancedMeshes) {
+                mesh.material.opacity = val
                 mesh.material.needsUpdate = true
             }
         })

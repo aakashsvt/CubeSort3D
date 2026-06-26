@@ -39,7 +39,7 @@ export default class Roulette {
         })
 
         this.shadowModel = this.shadowResource.scene
-        this.shadowModel.position.set(0, -0.016, 0.05)
+        this.shadowModel.position.set(0, -0.01, 0.05)
         this.shadowModel.scale.set(0.99, 1, 1)
 
         this.shadowModel.traverse((child) => {
@@ -49,6 +49,7 @@ export default class Roulette {
                 if (child.material) {
                     child.material.transparent = true
                     child.material.alphaTest = 0
+                    child.material.opacity = 0.8
                     child.material.needsUpdate = true
                 }
             }
@@ -78,11 +79,19 @@ export default class Roulette {
             shadowFolder.add(this.shadowModel.scale, 'y').min(0.1).max(10).step(0.01).name('scaleY')
             shadowFolder.add(this.shadowModel.scale, 'z').min(0.1).max(10).step(0.01).name('scaleZ')
 
-            const shadowParams = { alphaTest: 0 }
+            const shadowParams = { alphaTest: 0, opacity: 0.8 }
             shadowFolder.add(shadowParams, 'alphaTest').min(0).max(1).step(0.01).name('AlphaTest').onChange((val) => {
                 this.shadowModel.traverse((child) => {
                     if (child instanceof THREE.Mesh && child.material) {
                         child.material.alphaTest = val
+                        child.material.needsUpdate = true
+                    }
+                })
+            })
+            shadowFolder.add(shadowParams, 'opacity').min(0).max(1).step(0.01).name('Opacity').onChange((val) => {
+                this.shadowModel.traverse((child) => {
+                    if (child instanceof THREE.Mesh && child.material) {
+                        child.material.opacity = val
                         child.material.needsUpdate = true
                     }
                 })
