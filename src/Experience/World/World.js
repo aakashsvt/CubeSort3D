@@ -4,6 +4,7 @@ import VoxelControls from './VoxelControls.js'
 import Roulette from './Roulette.js'
 import BinManager from './BinManager.js'
 import Environment from './Environment.js'
+import PhysicsWorld from './PhysicsWorld.js'
 
 
 export default class World
@@ -17,11 +18,11 @@ export default class World
         // Wait for resources
         this.resources.on('ready', () =>
         {
-            
+            this.physicsWorld = new PhysicsWorld()
             this.voxelLevel = new VoxelLevel()
-            this.voxelControls = new VoxelControls(this.voxelLevel.spinGroup)
+            this.voxelControls = new VoxelControls(this.voxelLevel.spinGroup, this.voxelLevel, this.physicsWorld)
             
-            this.roulette = new Roulette()
+            this.roulette = new Roulette(this.physicsWorld)
             this.binManager = new BinManager()
             this.environment = new Environment()
         })
@@ -29,6 +30,7 @@ export default class World
 
     update()
     {
+        if(this.physicsWorld) this.physicsWorld.update()
         if(this.voxelLevel) this.voxelLevel.update?.()
         if(this.voxelControls) this.voxelControls.update()
         if(this.roulette) this.roulette.update()

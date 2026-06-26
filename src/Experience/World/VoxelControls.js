@@ -1,10 +1,19 @@
 import Experience from '../Experience.js'
+import * as THREE from 'three'
+import FloodFillSelector from './FloodFillSelector.js'
 
 export default class VoxelControls {
-    constructor(targetGroup) {
+    constructor(targetGroup, voxelLevel, physicsWorld) {
         this.experience = new Experience()
         this.targetGroup = targetGroup
+        this.voxelLevel = voxelLevel
+        this.physicsWorld = physicsWorld
         this.debug = this.experience.debug
+
+        this.raycaster = new THREE.Raycaster()
+        this.mouse = new THREE.Vector2()
+        this.isDragging = false
+        this.floodFill = new FloodFillSelector(this.voxelLevel.voxelGrid)
 
         this.touch = {
             active: false,
@@ -13,6 +22,8 @@ export default class VoxelControls {
             targetRotationY: 0,
             dampingFactor: 0.1
         }
+        
+        this.staggerDelay = 30
 
         this.setDebug()
         this.setInteraction()
@@ -23,6 +34,7 @@ export default class VoxelControls {
             this.debugFolder = this.debug.ui.addFolder('voxelControls')
             this.debugFolder.add(this.touch, 'rotationSpeed').min(0).max(20).step(0.1).name('swipeSpeed')
             this.debugFolder.add(this.touch, 'dampingFactor').min(0.01).max(1).step(0.01).name('dampingFactor')
+            this.debugFolder.add(this, 'staggerDelay').min(0).max(200).step(1).name('Fall Stagger (ms)')
         }
     }
 
@@ -37,11 +49,14 @@ export default class VoxelControls {
         canvas.addEventListener('pointerdown', (event) => {
             this.touch.active = true
             this.touch.previousX = event.clientX
+            this.isDragging = false
         }, { passive: false })
 
         window.addEventListener('pointermove', (event) => {
             if (this.touch.active) {
                 const deltaX = event.clientX - this.touch.previousX
+                if (Math.abs(deltaX) > 2) this.isDragging = true
+
                 this.touch.previousX = event.clientX
                 
                 // Normalize by screen width so mobile and PC rotate the exact same amount
@@ -50,11 +65,94 @@ export default class VoxelControls {
             }
         }, { passive: false })
 
-        window.addEventListener('pointerup', stopInteraction)
+        window.addEventListener('pointerup', (event) => {
+            this.touch.active = false
+            if (!this.isDragging) {
+                this.handleClick(event)
+            }
+        })
         window.addEventListener('pointerleave', stopInteraction)
         window.addEventListener('pointercancel', stopInteraction)
     }
 
+    handleClick(event) {
+        if (!this.voxelLevel.instancedMesh) return
+
+        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1
+        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+
+        this.raycaster.setFromCamera(this.mouse, this.experience.camera.instance)
+        const intersects = this.raycaster.intersectObject(this.voxelLevel.instancedMesh)
+
+        if (intersects.length > 0) {
+            const instanceId = intersects[0].instanceId
+            
+            const cube = this.voxelLevel.cubes.find(c => c.instanceId === instanceId)
+            if (!cube || !cube.active) return
+
+            const connected = this.floodFill.getConnectedGroup(cube.gridPos.x, cube.gridPos.y, cube.gridPos.z)
+            
+            // Need to initialize dynamic mesh if not done yet
+            if (this.physicsWorld && !this.physicsWorld.dynamicInstancedMesh) {
+                // We use the same geometry and material as the static mesh
+                const geom = this.voxelLevel.instancedMesh.geometry
+                const mat = this.voxelLevel.instancedMesh.material
+                this.physicsWorld.setupDynamicMesh(geom, mat, this.voxelLevel.cubes.length)
+            }
+
+            const dummy = new THREE.Object3D()
+            dummy.scale.set(0, 0, 0)
+            dummy.updateMatrix()
+
+            // Sort by distance to the clicked cube so they fall radiating outward
+            connected.sort((a, b) => {
+                const distA = Math.abs(a.gridPos.x - cube.gridPos.x) + Math.abs(a.gridPos.y - cube.gridPos.y) + Math.abs(a.gridPos.z - cube.gridPos.z)
+                const distB = Math.abs(b.gridPos.x - cube.gridPos.x) + Math.abs(b.gridPos.y - cube.gridPos.y) + Math.abs(b.gridPos.z - cube.gridPos.z)
+                return distA - distB
+            })
+
+            let delay = 0
+            for (const c of connected) {
+                c.active = false
+                this.voxelLevel.voxelGrid.remove(c.gridPos.x, c.gridPos.y, c.gridPos.z)
+
+                if (this.physicsWorld) {
+                    const worldMatrix = new THREE.Matrix4()
+                    const position = new THREE.Vector3()
+                    const quaternion = new THREE.Quaternion()
+                    const scale = new THREE.Vector3()
+
+                    this.voxelLevel.instancedMesh.getMatrixAt(c.instanceId, worldMatrix)
+                    worldMatrix.premultiply(this.voxelLevel.instancedMesh.matrixWorld)
+                    worldMatrix.decompose(position, quaternion, scale)
+                    
+                    const color = new THREE.Color()
+                    this.voxelLevel.instancedMesh.getColorAt(c.instanceId, color)
+                    
+                    const visualScale = scale.x
+                    const colliderSize = this.voxelLevel.cubeSize * scale.x
+
+                    setTimeout(() => {
+                        // Hide in static mesh right before falling
+                        this.voxelLevel.instancedMesh.setMatrixAt(c.instanceId, dummy.matrix)
+                        this.voxelLevel.instancedMesh.instanceMatrix.needsUpdate = true
+                        
+                        this.physicsWorld.spawnCube(position, quaternion, color, visualScale, colliderSize)
+                    }, delay)
+                    
+                    delay += this.staggerDelay // Stagger from debug UI
+                } else {
+                    this.voxelLevel.instancedMesh.setMatrixAt(c.instanceId, dummy.matrix)
+                }
+            }
+
+            if (!this.physicsWorld) {
+                this.voxelLevel.instancedMesh.instanceMatrix.needsUpdate = true
+            }
+        }
+
+    }
+    
     update() {
         if (this.targetGroup) {
             // Apply damping for smooth momentum feel

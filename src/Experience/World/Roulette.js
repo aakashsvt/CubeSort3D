@@ -2,8 +2,9 @@ import * as THREE from 'three'
 import Experience from '../Experience.js'
 
 export default class Roulette {
-    constructor() {
+    constructor(physicsWorld) {
         this.experience = new Experience()
+        this.physicsWorld = physicsWorld
         this.scene = this.experience.scene
         this.resources = this.experience.resources
         this.time = this.experience.time
@@ -58,6 +59,13 @@ export default class Roulette {
 
         this.group.add(this.shadowModel)
         this.group.add(this.model)
+
+        if (this.physicsWorld) {
+            // Need a tiny delay because PhysicsWorld async init might not have created the Rapier world yet
+            setTimeout(() => {
+                this.physicsWorld.createRouletteBody(this.group, this.model)
+            }, 500)
+        }
     }
 
     update() {

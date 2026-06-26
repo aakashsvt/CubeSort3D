@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import Experience from '../Experience.js'
+import VoxelGrid from './VoxelGrid.js'
 
 export default class VoxelLevel {
     constructor() {
@@ -36,8 +37,10 @@ export default class VoxelLevel {
         }
 
         this.cubes = []
+        this.voxelGrid = new VoxelGrid()
         this.instancedMesh = null
         this.debugObjects = []
+        this.cubeSize = 1
 
         // Resources
         this.resource = this.resources.items.levelData
@@ -55,7 +58,7 @@ export default class VoxelLevel {
 
         // Fallback to defaults if 'dashboard' is missing
         const dashboard = json.dashboard || {}
-        const cubeSize = dashboard.cubeSize || 1
+        this.cubeSize = dashboard.cubeSize || 1
         const palette = dashboard.palette || []
 
         // We look for lastGeneratedCubes, but fall back to cubes just in case
@@ -117,7 +120,7 @@ export default class VoxelLevel {
             geometry.translate(-center.x, -center.y, -center.z)
             const size = geometry.boundingBox.getSize(new THREE.Vector3())
             const maxDim = Math.max(size.x, size.y, size.z)
-            const scaleFactor = cubeSize / maxDim
+            const scaleFactor = this.cubeSize / maxDim
             geometry.scale(scaleFactor, scaleFactor, scaleFactor)
         }
 
@@ -139,10 +142,11 @@ export default class VoxelLevel {
 
             // Set Position relative to the center
             dummy.position.set(
-                (x - centerX) * cubeSize,
-                (y - centerY) * cubeSize,
-                (z - centerZ) * cubeSize
+                (x - centerX) * this.cubeSize,
+                (y - centerY) * this.cubeSize,
+                (z - centerZ) * this.cubeSize
             )
+            dummy.scale.set(1, 1, 1)
             dummy.updateMatrix()
             this.instancedMesh.setMatrixAt(i, dummy.matrix)
 
@@ -166,11 +170,14 @@ export default class VoxelLevel {
             this.instancedMesh.setColorAt(i, color)
 
             // Store logical data
-            this.cubes.push({
+            const cubeObj = {
                 instanceId: i,
                 gridPos: { x, y, z },
-                colorIndex: cubeData.colorIndex
-            })
+                colorIndex: cubeData.colorIndex,
+                active: true
+            }
+            this.cubes.push(cubeObj)
+            this.voxelGrid.set(x, y, z, cubeObj)
         }
 
         this.instancedMesh.instanceMatrix.needsUpdate = true
@@ -247,6 +254,7 @@ export default class VoxelLevel {
         }
         this.debugObjects = []
         this.cubes = []
+        this.voxelGrid.clear()
     }
 
     destroy() {
