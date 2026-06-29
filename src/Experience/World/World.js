@@ -24,6 +24,7 @@ export default class World
             
             this.roulette = new Roulette(this.physicsWorld)
             this.binManager = new BinManager()
+            this.physicsWorld.binManager = this.binManager
             this.environment = new Environment()
         })
     }

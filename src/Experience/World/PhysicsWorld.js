@@ -14,7 +14,7 @@ export default class PhysicsWorld {
         this.dynamicInstancedMesh = null
         
         this.physicsParams = {
-            gravity: -9.81,
+            gravity: -30.0,
             restitution: 0.1,
             friction: 0.6,
             debugRender: false
@@ -180,6 +180,23 @@ export default class PhysicsWorld {
         this.scene.add(this.dynamicInstancedMesh)
     }
 
+    getAvailableBinPositionForColor(colorHex) {
+        if (!this.binManager || !this.binManager.spawnedBins) return null
+        
+        for (const item of this.binManager.spawnedBins) {
+            if (item.colorBin.color.getHex() === colorHex && item.queueIndex === 0) {
+                // Ensure world matrix is up to date
+                this.binManager.binsGroup.updateMatrixWorld(true)
+                const binPos = new THREE.Vector3()
+                binPos.setFromMatrixPosition(item.colorBin.matrix)
+                binPos.applyMatrix4(this.binManager.binsGroup.matrixWorld)
+                binPos.y += 0.5 // Aim for slightly above the bin entry
+                return binPos
+            }
+        }
+        return null
+    }
+
     spawnCube(worldPos, worldQuat, color, visualScale, colliderSize) {
         if (!this.dynamicInstancedMesh) return
         
@@ -200,7 +217,8 @@ export default class PhysicsWorld {
         this.dynamicCubes.push({
             body: body,
             instanceId: instanceId,
-            scaleFactor: visualScale
+            scaleFactor: visualScale,
+            colorHex: color.getHex()
         })
     }
 
@@ -222,12 +240,11 @@ export default class PhysicsWorld {
         
         // Render debug lines
         if (this.physicsParams.debugRender && this.debugLines) {
-            const buffers = this.world.debugRender()
-            this.debugLines.geometry.setAttribute('position', new THREE.BufferAttribute(buffers.vertices, 3))
+                    this.debugLines.geometry.setAttribute('position', new THREE.BufferAttribute(buffers.vertices, 3))
             this.debugLines.geometry.setAttribute('color', new THREE.BufferAttribute(buffers.colors, 4))
         }
 
-        // Sync dynamic cubes and apply ConveyorBelt circular physics
+        // Sync dynamic cubes and apply ConveyorBelt circular physics / Routing
         if (this.dynamicInstancedMesh && this.dynamicCubes.length > 0) {
             const dummy = new THREE.Object3D()
             const rouletteCenter = this.rouletteGroup ? this.rouletteGroup.position : { x: 0, y: 0, z: 0 }
@@ -236,40 +253,98 @@ export default class PhysicsWorld {
             const angleStep = omega * dt
             const rotationQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), angleStep)
             
-            for(const item of this.dynamicCubes) {
+            for(let i = this.dynamicCubes.length - 1; i >= 0; i--) {
+                const item = this.dynamicCubes[i]
+                
+                // 1. If it is currently being routed via Bezier curve
+                if (item.isRouting) {
+                    item.routeProgress += dt / 0.35 // 0.35s duration
+                    
+                    if (item.routeProgress >= 1) {
+                        // Reached the bin! Hide it.
+                        dummy.scale.set(0, 0, 0)
+                        dummy.updateMatrix()
+                        this.dynamicInstancedMesh.setMatrixAt(item.instanceId, dummy.matrix)
+                        this.dynamicCubes.splice(i, 1) // Remove from physics/animation tracking
+                        continue
+                    }
+                    
+                    // Bezier interpolation (CatmullRom-style arc)
+                    const t = item.routeProgress
+                    const u = 1 - t
+                    const tt = t * t
+                    const uu = u * u
+                    
+                    const p = new THREE.Vector3()
+                    p.x = uu * item.startPos.x + 2 * u * t * item.midPos.x + tt * item.targetPos.x
+                    p.y = uu * item.startPos.y + 2 * u * t * item.midPos.y + tt * item.targetPos.y
+                    p.z = uu * item.startPos.z + 2 * u * t * item.midPos.z + tt * item.targetPos.z
+                    
+                    dummy.position.copy(p)
+                    // Random spin during flight
+                    item.rotX = (item.rotX || 0) + dt * 10
+                    item.rotY = (item.rotY || 0) + dt * 15
+                    dummy.rotation.set(item.rotX, item.rotY, 0)
+                    
+                    // Squish on arrival (last 20%)
+                    let scale = item.scaleFactor
+                    if (t > 0.8) {
+                        scale = THREE.MathUtils.lerp(item.scaleFactor, 0.1, (t - 0.8) / 0.2)
+                    }
+                    dummy.scale.set(scale, scale, scale)
+                    dummy.updateMatrix()
+                    this.dynamicInstancedMesh.setMatrixAt(item.instanceId, dummy.matrix)
+                    continue
+                }
+
+                // 2. Normal physics tracking
                 const translation = item.body.translation()
                 const rotation = item.body.rotation()
                 
                 // If the cube has fallen onto the roulette (below wall height)
-                if (translation.y < 2.0) {
+                if (translation.y < 1.5) {
+                    // Apply ConveyorBelt physics to keep it spinning
                     const toObject = new THREE.Vector3(translation.x - rouletteCenter.x, 0, translation.z - rouletteCenter.z)
                     
-                    // Exact logic from C# ConveyorBelt.cs: 
-                    // Calculate exact future position on the circle to derive a centripetal velocity 
-                    // that prevents outward drift completely.
                     const nextLocalPos = toObject.clone().applyQuaternion(rotationQuat)
                     const velX = (nextLocalPos.x - toObject.x) / dt
                     const velZ = (nextLocalPos.z - toObject.z) / dt
                     
                     const currentVel = item.body.linvel()
-                    // Apply the exact tangential+centripetal velocity to stick it to the radius
                     item.body.setLinvel({ x: velX, y: currentVel.y, z: velZ }, true)
                     
-                    // Rotate the cube so it spins with the roulette
                     const currentAng = item.body.angvel()
                     item.body.setAngvel({ x: currentAng.x, y: omega, z: currentAng.z }, true)
+
+                    // Track how long it has been on the roulette
+                    item.timeOnRoulette = (item.timeOnRoulette || 0) + dt
+
+                    // Only try to route after it has spent at least 0.8 seconds spinning on the roulette
+                    if (item.timeOnRoulette > 0.8) {
+                        // Check if it matches an available bin
+                        const binPos = this.getAvailableBinPositionForColor(item.colorHex)
+                        if (binPos) {
+                            // Start routing animation!
+                            item.isRouting = true
+                            item.routeProgress = 0
+                            item.startPos = new THREE.Vector3(translation.x, translation.y, translation.z)
+                            item.targetPos = binPos
+                            
+                            // Arc midpoint
+                            item.midPos = new THREE.Vector3().lerpVectors(item.startPos, item.targetPos, 0.5)
+                            item.midPos.y += 3.0 // Pop up into the air!
+
+                            this.world.removeRigidBody(item.body)
+                            item.body = null
+                            continue
+                        }
+                    }
                 }
 
                 dummy.position.set(translation.x, translation.y, translation.z)
                 dummy.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w)
-                dummy.scale.set(1, 1, 1) // We already scaled the geometry to worldSize equivalents? Wait.
-                // If the geometry is already scaled by `scaleFactor` during creation, its base size is `cubeSize`.
-                // In world space, the object size should be `worldSize`. 
-                // So if geometry is `cubeSize`, scale should be `worldSize / cubeSize`.
-                // For simplicity, we can pass scale logic.
                 dummy.scale.set(item.scaleFactor, item.scaleFactor, item.scaleFactor)
                 dummy.updateMatrix()
-                
                 this.dynamicInstancedMesh.setMatrixAt(item.instanceId, dummy.matrix)
             }
             this.dynamicInstancedMesh.instanceMatrix.needsUpdate = true
