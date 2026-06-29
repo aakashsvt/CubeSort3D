@@ -100,10 +100,9 @@ export default class Roulette {
         this.model.add(this.wallMesh)
 
         if (this.physicsWorld) {
-            // Need a tiny delay because PhysicsWorld async init might not have created the Rapier world yet
-            setTimeout(() => {
+            this.physicsWorld.ready.then(() => {
                 this.physicsWorld.createRouletteBody(this.group, this.model, this.wallParams.netOffsetY)
-            }, 500)
+            })
         }
     }
 

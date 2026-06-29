@@ -19,7 +19,7 @@ export default class PhysicsWorld {
         this.debugLines = null
         
         this.setDebug()
-        this.init()
+        this.ready = this.init()
     }
 
     setDebug() {
