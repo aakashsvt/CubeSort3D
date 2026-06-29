@@ -3,11 +3,13 @@ import * as THREE from 'three'
 import FloodFillSelector from './FloodFillSelector.js'
 
 export default class VoxelControls {
-    constructor(targetGroup, voxelLevel, physicsWorld) {
+    constructor(targetGroup, voxelLevel, physicsWorld, cubeManager) {
         this.experience = new Experience()
+        this.scene = this.experience.scene
         this.targetGroup = targetGroup
         this.voxelLevel = voxelLevel
         this.physicsWorld = physicsWorld
+        this.cubeManager = cubeManager
         this.debug = this.experience.debug
 
         this.raycaster = new THREE.Raycaster()
@@ -101,7 +103,7 @@ export default class VoxelControls {
                 // We use the same geometry and material as the static mesh
                 const geom = this.voxelLevel.instancedMesh.geometry
                 const mat = this.voxelLevel.instancedMesh.material
-                this.physicsWorld.setupDynamicMesh(geom, mat, this.voxelLevel.cubes.length)
+                this.cubeManager.setupDynamicMesh(geom, mat, this.voxelLevel.cubes.length)
             }
 
             const dummy = new THREE.Object3D()
@@ -181,7 +183,8 @@ export default class VoxelControls {
                 this.voxelLevel.instancedMesh.setMatrixAt(item.instanceId, dummy.matrix)
                 this.voxelLevel.instancedMesh.instanceMatrix.needsUpdate = true
                 
-                this.physicsWorld.spawnCube(item.position, item.quaternion, item.color, item.visualScale, item.colliderSize)
+                const body = this.physicsWorld.createCubeBody(item.position, item.quaternion, item.colliderSize)
+                this.cubeManager.spawnCube(item.color, item.visualScale, body)
             }
         }
     }

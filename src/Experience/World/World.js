@@ -5,6 +5,7 @@ import Roulette from './Roulette.js'
 import BinManager from './BinManager.js'
 import Environment from './Environment.js'
 import PhysicsWorld from './PhysicsWorld.js'
+import CubeManager from './CubeManager.js'
 
 
 export default class World
@@ -19,12 +20,13 @@ export default class World
         this.resources.on('ready', () =>
         {
             this.physicsWorld = new PhysicsWorld()
-            this.voxelLevel = new VoxelLevel()
-            this.voxelControls = new VoxelControls(this.voxelLevel.spinGroup, this.voxelLevel, this.physicsWorld)
-            
-            this.roulette = new Roulette(this.physicsWorld)
             this.binManager = new BinManager()
-            this.physicsWorld.binManager = this.binManager
+            this.roulette = new Roulette(this.physicsWorld)
+            
+            this.cubeManager = new CubeManager(this.scene, this.physicsWorld, this.binManager, this.roulette.group)
+            
+            this.voxelLevel = new VoxelLevel()
+            this.voxelControls = new VoxelControls(this.voxelLevel.spinGroup, this.voxelLevel, this.physicsWorld, this.cubeManager)
             this.environment = new Environment()
         })
     }
@@ -32,6 +34,7 @@ export default class World
     update()
     {
         if(this.physicsWorld) this.physicsWorld.update()
+        if(this.cubeManager) this.cubeManager.update(1 / 60)
         if(this.voxelLevel) this.voxelLevel.update?.()
         if(this.voxelControls) this.voxelControls.update()
         if(this.roulette) this.roulette.update()
