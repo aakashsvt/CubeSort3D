@@ -61,6 +61,8 @@ export default class CubeManager {
                 if (item.colorBin.currentCount < item.colorBin.capacity) {
                     item.colorBin.currentCount++
                     item.colorBin.updateLabelText()
+                    this.binManager.updateLayout()
+                    console.log('Internal cubes count:', this.binManager.internalCubeInstancedMesh?.count, 'Visible:', Math.min(item.colorBin.currentCount, this.binManager.internalCubeTransforms?.length || 0))
                     
                     if (item.colorBin.currentCount >= item.colorBin.capacity) {
                         this.binManager.advanceQueue(item.rIndex)

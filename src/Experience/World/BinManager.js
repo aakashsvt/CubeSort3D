@@ -159,17 +159,48 @@ export default class BinManager {
         const maxInstances = binPlans.length;
         
         this.binInstancedMeshes = [];
+        this.internalCubeTransforms = [];
+        let cubeGeo = null;
+        let cubeMat = null;
+
+        const cubeMeshes = [];
         this.originalModel.traverse((child) => {
-            if (child instanceof THREE.Mesh && !child.name.startsWith('Cube')) {
-                const material = child.material.clone()
-                const instancedMesh = new THREE.InstancedMesh(child.geometry, material, maxInstances)
-                instancedMesh.castShadow = false
-                instancedMesh.receiveShadow = false
-                instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-                this.binInstancedMeshes.push(instancedMesh)
-                this.binsGroup.add(instancedMesh)
+            if (child instanceof THREE.Mesh) {
+                if (child.name.toLowerCase().startsWith('cube')) {
+                    cubeMeshes.push(child);
+                } else {
+                    const material = child.material.clone()
+                    const instancedMesh = new THREE.InstancedMesh(child.geometry, material, maxInstances)
+                    instancedMesh.castShadow = false
+                    instancedMesh.receiveShadow = false
+                    instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+                    this.binInstancedMeshes.push(instancedMesh)
+                    this.binsGroup.add(instancedMesh)
+                }
             }
         });
+
+        // Sort internal cubes by name so they fill predictably
+        cubeMeshes.sort((a, b) => a.name.localeCompare(b.name));
+        this.originalModel.updateMatrixWorld(true); // Ensure all world matrices are calculated
+        for (const child of cubeMeshes) {
+            this.internalCubeTransforms.push(child.matrixWorld.clone());
+            if (!cubeGeo) {
+                cubeGeo = child.geometry;
+                cubeMat = child.material.clone();
+                cubeMat.visible = true;
+                cubeMat.transparent = false;
+                cubeMat.opacity = 1.0;
+            }
+        }
+
+        if (cubeGeo) {
+            this.internalCubeInstancedMesh = new THREE.InstancedMesh(cubeGeo, cubeMat, maxInstances * this.internalCubeTransforms.length)
+            this.internalCubeInstancedMesh.castShadow = false
+            this.internalCubeInstancedMesh.receiveShadow = false
+            this.internalCubeInstancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+            this.binsGroup.add(this.internalCubeInstancedMesh)
+        }
 
         this.shadowInstancedMeshes = [];
         this.originalShadow.traverse((child) => {
@@ -211,6 +242,16 @@ export default class BinManager {
                 mesh.setColorAt(index, color)
             }
 
+            if (this.internalCubeInstancedMesh) {
+                const numCubes = this.internalCubeTransforms.length
+                for (let j = 0; j < numCubes; j++) {
+                    const instanceId = index * numCubes + j
+                    this.internalCubeInstancedMesh.setColorAt(instanceId, color)
+                    const tempMatrix = new THREE.Matrix4().makeScale(0, 0, 0)
+                    this.internalCubeInstancedMesh.setMatrixAt(instanceId, tempMatrix)
+                }
+            }
+
             // Unity logic: round-robin into rows, then queue backwards
             const rIndex = index % this.activeBinCount
             const queueIndex = Math.floor(index / this.activeBinCount)
@@ -228,6 +269,10 @@ export default class BinManager {
         for (const mesh of this.binInstancedMeshes) {
             mesh.count = actualCount;
             if(actualCount > 0) mesh.instanceColor.needsUpdate = true;
+        }
+        if (this.internalCubeInstancedMesh) {
+            this.internalCubeInstancedMesh.count = actualCount * this.internalCubeTransforms.length;
+            if(actualCount > 0) this.internalCubeInstancedMesh.instanceColor.needsUpdate = true;
         }
         for (const mesh of this.shadowInstancedMeshes) {
             mesh.count = actualCount;
@@ -282,19 +327,35 @@ export default class BinManager {
 
             const i = item.colorBin.instanceIndex;
             for (const mesh of this.binInstancedMeshes) {
-                mesh.setMatrixAt(i, item.colorBin.matrix)
+                mesh.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.matrix)
             }
             for (const mesh of this.shadowInstancedMeshes) {
-                mesh.setMatrixAt(i, item.colorBin.shadowMatrix)
+                mesh.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.shadowMatrix)
+            }
+
+            // Update internal cubes
+            if (this.internalCubeInstancedMesh) {
+                const numCubes = this.internalCubeTransforms.length
+                const visibleCount = Math.min(item.colorBin.currentCount, numCubes)
+                
+                for (let j = 0; j < numCubes; j++) {
+                    const instanceId = item.colorBin.instanceIndex * numCubes + j
+                    
+                    if (item.queueIndex >= 0 && item.queueIndex < 2 && j < visibleCount) {
+                        const localMat = this.internalCubeTransforms[j]
+                        const finalMat = new THREE.Matrix4().multiplyMatrices(item.colorBin.matrix, localMat)
+                        this.internalCubeInstancedMesh.setMatrixAt(instanceId, finalMat)
+                    } else {
+                        const tempMatrix = new THREE.Matrix4().makeScale(0, 0, 0)
+                        this.internalCubeInstancedMesh.setMatrixAt(instanceId, tempMatrix)
+                    }
+                }
             }
         }
 
-        for (const mesh of this.binInstancedMeshes) {
-            mesh.instanceMatrix.needsUpdate = true
-        }
-        for (const mesh of this.shadowInstancedMeshes) {
-            mesh.instanceMatrix.needsUpdate = true
-        }
+        for (const mesh of this.binInstancedMeshes) mesh.instanceMatrix.needsUpdate = true
+        for (const mesh of this.shadowInstancedMeshes) mesh.instanceMatrix.needsUpdate = true
+        if (this.internalCubeInstancedMesh) this.internalCubeInstancedMesh.instanceMatrix.needsUpdate = true
     }
 
     setDebug() {
