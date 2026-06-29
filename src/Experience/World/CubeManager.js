@@ -58,12 +58,21 @@ export default class CubeManager {
         
         for (const item of this.binManager.spawnedBins) {
             if (item.colorBin.color.getHex() === colorHex && item.queueIndex === 0) {
-                this.binManager.binsGroup.updateMatrixWorld(true)
-                const binPos = new THREE.Vector3()
-                binPos.setFromMatrixPosition(item.colorBin.matrix)
-                binPos.applyMatrix4(this.binManager.binsGroup.matrixWorld)
-                binPos.y += 0.5 
-                return binPos
+                if (item.colorBin.currentCount < item.colorBin.capacity) {
+                    item.colorBin.currentCount++
+                    item.colorBin.updateLabelText()
+                    
+                    if (item.colorBin.currentCount >= item.colorBin.capacity) {
+                        this.binManager.advanceQueue(item.rIndex)
+                    }
+
+                    this.binManager.binsGroup.updateMatrixWorld(true)
+                    const binPos = new THREE.Vector3()
+                    binPos.setFromMatrixPosition(item.colorBin.matrix)
+                    binPos.applyMatrix4(this.binManager.binsGroup.matrixWorld)
+                    binPos.y += 0.5 
+                    return binPos
+                }
             }
         }
         return null

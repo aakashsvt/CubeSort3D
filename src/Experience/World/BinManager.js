@@ -27,7 +27,12 @@ export default class BinManager {
             shadowScaleY: 1,
             shadowScaleZ: 1,
             shadowAlphaTest: 0,
-            shadowOpacity: 0.55
+            shadowOpacity: 0.55,
+            labelScale: 0.06,
+            labelPosX: 0.0,
+            labelPosY: 0.23,
+            labelPosZ: 0.3,
+            labelRotX: -0.5
         }
 
         this.originalModel = this.resources.items.binModel.scene
@@ -118,10 +123,23 @@ export default class BinManager {
         // 6. Round robin enqueue (or explicit queue)
         const binPlans = []
         if (dashboard.binQueue && dashboard.binQueue.length > 0) {
-            // Use explicit authored queue if available
+            let unplannedDemand = { ...remainingCubesPerColor }
             dashboard.binQueue.forEach(c => {
-                binPlans.push({ colorIndex: c, capacity: maxCapacity }) // simplified capacity for visual
+                if (unplannedDemand[c] > 0) {
+                    let cap = Math.min(maxCapacity, unplannedDemand[c])
+                    binPlans.push({ colorIndex: c, capacity: cap })
+                    unplannedDemand[c] -= cap
+                }
             })
+            
+            // Add remaining unplanned demand
+            for (const c of colorsWithDemand) {
+                while (unplannedDemand[c] > 0) {
+                    let cap = Math.min(maxCapacity, unplannedDemand[c])
+                    binPlans.push({ colorIndex: c, capacity: cap })
+                    unplannedDemand[c] -= cap
+                }
+            }
         } else {
             let addedPlan
             do {
@@ -187,6 +205,7 @@ export default class BinManager {
             }
 
             const colorBin = new ColorBin(index, plan.colorIndex, color, plan.capacity)
+            this.binsGroup.add(colorBin.labelMesh)
 
             for (const mesh of this.binInstancedMeshes) {
                 mesh.setColorAt(index, color)
@@ -222,6 +241,15 @@ export default class BinManager {
         this.updateLayout() // Initialize layout
     }
 
+    advanceQueue(rIndex) {
+        for (const item of this.spawnedBins) {
+            if (item.rIndex === rIndex) {
+                item.queueIndex--
+            }
+        }
+        this.updateLayout()
+    }
+
     updateLayout() {
         const numRows = Math.min(this.activeBinCount, this.spawnedBins.length)
         const startX = -((numRows - 1) * this.debugSettings.rowSpacing) / 2
@@ -236,9 +264,19 @@ export default class BinManager {
             item.colorBin.shadowOffsetZ = this.debugSettings.shadowZ
             item.colorBin.setShadowScale(this.debugSettings.shadowScaleX, this.debugSettings.shadowScaleY, this.debugSettings.shadowScaleZ)
             item.colorBin.setRotationX(this.debugSettings.binRotationX)
+
+            // Label positioning
+            item.colorBin.labelMesh.position.set(
+                posX + this.debugSettings.labelPosX,
+                this.debugSettings.labelPosY,
+                posZ + this.debugSettings.labelPosZ
+            )
+            // The canvas is 256x128 (2:1 aspect ratio), so we multiply X by 2
+            item.colorBin.labelMesh.scale.set(this.debugSettings.labelScale * 2, this.debugSettings.labelScale, 1)
+            item.colorBin.labelMesh.rotation.x = this.debugSettings.labelRotX
             
             // Only render 2 rows at a time (queueIndex 0 and 1)
-            item.colorBin.setVisible(item.queueIndex < 2)
+            item.colorBin.setVisible(item.queueIndex >= 0 && item.queueIndex < 2)
             
             item.colorBin.updateMatrices()
 
@@ -308,5 +346,12 @@ export default class BinManager {
                 mesh.material.needsUpdate = true
             }
         })
+
+        const labelFolder = this.debugFolder.addFolder('Label UI')
+        labelFolder.add(this.debugSettings, 'labelScale').min(0.01).max(2).step(0.01).name('Scale').onChange(() => this.updateLayout())
+        labelFolder.add(this.debugSettings, 'labelPosX').min(-2).max(2).step(0.01).name('Pos X').onChange(() => this.updateLayout())
+        labelFolder.add(this.debugSettings, 'labelPosY').min(-2).max(2).step(0.01).name('Pos Y').onChange(() => this.updateLayout())
+        labelFolder.add(this.debugSettings, 'labelPosZ').min(-2).max(2).step(0.01).name('Pos Z').onChange(() => this.updateLayout())
+        labelFolder.add(this.debugSettings, 'labelRotX').min(-Math.PI).max(Math.PI).step(0.01).name('Rot X').onChange(() => this.updateLayout())
     }
 }

@@ -8,6 +8,7 @@ export default class ColorBin {
         this.colorIndex = colorIndex
         this.capacity = capacity
         this.color = color
+        this.currentCount = 0
         
         this.position = new THREE.Vector3()
         this.rotationX = 0
@@ -19,6 +20,30 @@ export default class ColorBin {
 
         this.matrix = new THREE.Matrix4()
         this.shadowMatrix = new THREE.Matrix4()
+
+        const canvas = document.createElement('canvas')
+        canvas.width = 256
+        canvas.height = 128
+        this.canvasContext = canvas.getContext('2d')
+        this.labelTexture = new THREE.CanvasTexture(canvas)
+        
+        const material = new THREE.MeshBasicMaterial({ map: this.labelTexture, transparent: true })
+        const geometry = new THREE.PlaneGeometry(1, 1)
+        this.labelMesh = new THREE.Mesh(geometry, material)
+        
+        this.updateLabelText()
+    }
+
+    updateLabelText() {
+        const percent = Math.floor((this.currentCount / this.capacity) * 100)
+        this.canvasContext.fillStyle = 'black'
+        this.canvasContext.fillRect(0, 0, 256, 128)
+        this.canvasContext.fillStyle = 'white'
+        this.canvasContext.font = 'bold 70px Arial'
+        this.canvasContext.textAlign = 'center'
+        this.canvasContext.textBaseline = 'middle'
+        this.canvasContext.fillText(`${percent}%`, 128, 64)
+        this.labelTexture.needsUpdate = true
     }
 
     setPosition(x, y, z) {
@@ -39,6 +64,7 @@ export default class ColorBin {
 
     setVisible(visible) {
         this.visible = visible
+        if (this.labelMesh) this.labelMesh.visible = visible
     }
 
     updateMatrices() {

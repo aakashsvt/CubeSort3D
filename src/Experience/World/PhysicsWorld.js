@@ -8,10 +8,7 @@ export default class PhysicsWorld {
         this.experience = new Experience()
         this.scene = this.experience.scene
         this.time = this.experience.time
-        
         this.world = null
-        this.world = null
-        
         this.physicsParams = {
             gravity: -30.0,
             restitution: 0.1,
