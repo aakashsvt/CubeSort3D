@@ -60,30 +60,39 @@ export default class PhysicsWorld {
         this.world = new RAPIER.World(gravity)
     }
 
-    createRouletteBody(rouletteGroup, rouletteModel) {
+    createRouletteBody(rouletteGroup, rouletteModel, netOffsetY = 0) {
         if (!this.world) return
 
         let bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
         this.rouletteBody = this.world.createRigidBody(bodyDesc)
         this.rouletteGroup = rouletteGroup
+        this.rouletteModel = rouletteModel
 
-        rouletteGroup.updateMatrixWorld(true)
+        rouletteModel.updateMatrixWorld(true)
+
+        const localBox = new THREE.Box3()
 
         rouletteModel.traverse((child) => {
             if (child.isMesh) {
+                // Compute bounds for safety net (only using visual model, not invisible wall)
+                if (child.name !== 'InvisibleWall') {
+                    child.geometry.computeBoundingBox()
+                    const childBox = child.geometry.boundingBox.clone()
+                    childBox.applyMatrix4(child.matrix)
+                    localBox.union(childBox)
+                }
+
+                // Generate trimesh for EVERYTHING (both roulette and wall) to perfectly fit
                 const geometry = child.geometry.clone()
                 const matrix = new THREE.Matrix4()
                 matrix.copy(child.matrixWorld)
                 
-                const groupInverse = new THREE.Matrix4().copy(rouletteGroup.matrixWorld).invert()
-                matrix.premultiply(groupInverse) // Now matrix is purely local
+                const modelInverse = new THREE.Matrix4().copy(rouletteModel.matrixWorld).invert()
+                matrix.premultiply(modelInverse) 
 
-                // Bake the group's scale into the geometry since Rapier colliders don't scale dynamically
-                const scaleMatrix = new THREE.Matrix4().makeScale(
-                    rouletteGroup.scale.x,
-                    rouletteGroup.scale.y,
-                    rouletteGroup.scale.z
-                )
+                const worldScale = new THREE.Vector3()
+                rouletteModel.matrixWorld.decompose(new THREE.Vector3(), new THREE.Quaternion(), worldScale)
+                const scaleMatrix = new THREE.Matrix4().makeScale(worldScale.x, worldScale.y, worldScale.z)
                 scaleMatrix.multiply(matrix)
                 geometry.applyMatrix4(scaleMatrix)
 
@@ -102,20 +111,53 @@ export default class PhysicsWorld {
                 const indicesUint32 = new Uint32Array(indices)
 
                 let colliderDesc = RAPIER.ColliderDesc.trimesh(verticesFloat32, indicesUint32)
-                colliderDesc.setRestitution(0.2)
-                colliderDesc.setFriction(0.6)
+                colliderDesc.setRestitution(0.1)
+                
+                if (child.name === 'InvisibleWall') {
+                    colliderDesc.setFriction(0.0) // Slippery wall
+                } else {
+                    colliderDesc.setFriction(5.0) // Normal friction
+                    colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Max)
+                }
+                
                 this.world.createCollider(colliderDesc, this.rouletteBody)
             }
         })
+
+        // ----------------------------------------------------------------
+        // SAFETY NET (Thick Cylinder)
+        // Placed exactly at the bottom bound of the model to catch tunneling cubes.
+        // ----------------------------------------------------------------
+        const size = localBox.getSize(new THREE.Vector3())
+        const localRadius = Math.max(size.x, size.z) / 2
+        const localMinY = localBox.min.y
+
+        const worldScale = new THREE.Vector3()
+        rouletteModel.matrixWorld.decompose(new THREE.Vector3(), new THREE.Quaternion(), worldScale)
+
+        const scaledRadius = localRadius * Math.max(worldScale.x, worldScale.z)
+        const halfHeight = 0.5 // 1.0 unit thick safety net
+        const scaledHalfHeight = halfHeight * worldScale.y
+        
+        // Position the top of the cylinder at the lowest point of the model + the user offset
+        const cyCenterY = ((localMinY + netOffsetY) * worldScale.y) - scaledHalfHeight
+
+        let netDesc = RAPIER.ColliderDesc.cylinder(scaledHalfHeight, scaledRadius)
+        netDesc.setTranslation(0, cyCenterY, 0)
+        netDesc.setRestitution(0.1)
+        netDesc.setFriction(5.0)
+        netDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Max)
+        
+        this.world.createCollider(netDesc, this.rouletteBody)
     }
 
-    updateRouletteBody(rouletteGroup, rouletteModel) {
+    updateRouletteBody(rouletteGroup, rouletteModel, netOffsetY = 0) {
         if (!this.world) return
         if (this.rouletteBody) {
             this.world.removeRigidBody(this.rouletteBody)
             this.rouletteBody = null
         }
-        this.createRouletteBody(rouletteGroup, rouletteModel)
+        this.createRouletteBody(rouletteGroup, rouletteModel, netOffsetY)
     }
 
     setupDynamicMesh(geometry, material, maxCubes) {
@@ -142,6 +184,7 @@ export default class PhysicsWorld {
         if (!this.dynamicInstancedMesh) return
         
         let bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(worldPos.x, worldPos.y, worldPos.z).setRotation(worldQuat)
+        bodyDesc.setCcdEnabled(true) // Enable CCD to prevent tunneling through the trimesh!
         let body = this.world.createRigidBody(bodyDesc)
         
         // Slightly shrink collider (0.48 instead of 0.5 half-extents) to prevent explosive blast-outs
@@ -164,12 +207,12 @@ export default class PhysicsWorld {
     update() {
         if (!this.world) return
         
-        if (this.rouletteBody && this.rouletteGroup) {
-            this.rouletteGroup.updateMatrixWorld(true)
+        if (this.rouletteBody && this.rouletteModel) {
+            this.rouletteModel.updateMatrixWorld(true)
             const pos = new THREE.Vector3()
             const quat = new THREE.Quaternion()
             const scale = new THREE.Vector3()
-            this.rouletteGroup.matrixWorld.decompose(pos, quat, scale)
+            this.rouletteModel.matrixWorld.decompose(pos, quat, scale)
             this.rouletteBody.setNextKinematicTranslation(pos)
             this.rouletteBody.setNextKinematicRotation(quat)
         }
@@ -184,13 +227,39 @@ export default class PhysicsWorld {
             this.debugLines.geometry.setAttribute('color', new THREE.BufferAttribute(buffers.colors, 4))
         }
 
-        // Sync dynamic cubes
+        // Sync dynamic cubes and apply ConveyorBelt circular physics
         if (this.dynamicInstancedMesh && this.dynamicCubes.length > 0) {
             const dummy = new THREE.Object3D()
+            const rouletteCenter = this.rouletteGroup ? this.rouletteGroup.position : { x: 0, y: 0, z: 0 }
+            const dt = 1 / 60 // Rapier fixed step
+            const omega = 2.0 // matches Roulette.js this.speed
+            const angleStep = omega * dt
+            const rotationQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), angleStep)
+            
             for(const item of this.dynamicCubes) {
                 const translation = item.body.translation()
                 const rotation = item.body.rotation()
                 
+                // If the cube has fallen onto the roulette (below wall height)
+                if (translation.y < 2.0) {
+                    const toObject = new THREE.Vector3(translation.x - rouletteCenter.x, 0, translation.z - rouletteCenter.z)
+                    
+                    // Exact logic from C# ConveyorBelt.cs: 
+                    // Calculate exact future position on the circle to derive a centripetal velocity 
+                    // that prevents outward drift completely.
+                    const nextLocalPos = toObject.clone().applyQuaternion(rotationQuat)
+                    const velX = (nextLocalPos.x - toObject.x) / dt
+                    const velZ = (nextLocalPos.z - toObject.z) / dt
+                    
+                    const currentVel = item.body.linvel()
+                    // Apply the exact tangential+centripetal velocity to stick it to the radius
+                    item.body.setLinvel({ x: velX, y: currentVel.y, z: velZ }, true)
+                    
+                    // Rotate the cube so it spins with the roulette
+                    const currentAng = item.body.angvel()
+                    item.body.setAngvel({ x: currentAng.x, y: omega, z: currentAng.z }, true)
+                }
+
                 dummy.position.set(translation.x, translation.y, translation.z)
                 dummy.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w)
                 dummy.scale.set(1, 1, 1) // We already scaled the geometry to worldSize equivalents? Wait.

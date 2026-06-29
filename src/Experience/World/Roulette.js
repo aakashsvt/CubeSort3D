@@ -14,7 +14,8 @@ export default class Roulette {
         this.wallParams = {
             radiusOffset: 0.0,
             height: 2.0,
-            posY: 0.9
+            posY: 0.9,
+            netOffsetY: 0.0
         }
 
         this.speed = 2
@@ -24,7 +25,7 @@ export default class Roulette {
 
     setModel() {
         this.group = new THREE.Group()
-        this.group.position.set(0, -0.7, -1.5)
+        this.group.position.set(0, -0.7, -1.8)
         this.group.rotation.set(0.09, 0, 0)
         this.group.scale.set(2.15, 2.15, 2.15)
         this.scene.add(this.group)
@@ -78,9 +79,9 @@ export default class Roulette {
         })
         const size = localBox.getSize(new THREE.Vector3())
         const center = localBox.getCenter(new THREE.Vector3())
-        const localRouletteRadius = Math.max(size.x, size.z) / 2
         
-        this.wallParams.radius = localRouletteRadius + this.wallParams.radiusOffset
+        // Explicitly setting radius to 1.15 as requested
+        this.wallParams.radius = 1.15
 
         this.wallMaterial = new THREE.MeshStandardMaterial({
             color: 0xff0000,
@@ -94,13 +95,14 @@ export default class Roulette {
             new THREE.CylinderGeometry(this.wallParams.radius, this.wallParams.radius, this.wallParams.height, 32, 1, true),
             this.wallMaterial
         )
+        this.wallMesh.name = 'InvisibleWall'
         this.wallMesh.position.y = this.wallParams.posY
         this.model.add(this.wallMesh)
 
         if (this.physicsWorld) {
             // Need a tiny delay because PhysicsWorld async init might not have created the Rapier world yet
             setTimeout(() => {
-                this.physicsWorld.createRouletteBody(this.group, this.model)
+                this.physicsWorld.createRouletteBody(this.group, this.model, this.wallParams.netOffsetY)
             }, 500)
         }
     }
@@ -140,13 +142,14 @@ export default class Roulette {
             
             const updateWallPhysics = () => {
                 if (this.physicsWorld) {
-                    this.physicsWorld.updateRouletteBody(this.group, this.model)
+                    this.physicsWorld.updateRouletteBody(this.group, this.model, this.wallParams.netOffsetY)
                 }
             }
 
             wallFolder.add(this.wallParams, 'radius').min(1).max(10).step(0.01).name('Radius').onChange(updateWallVisuals).onFinishChange(updateWallPhysics)
             wallFolder.add(this.wallParams, 'height').min(0.1).max(15).step(0.01).name('Height').onChange(updateWallVisuals).onFinishChange(updateWallPhysics)
             wallFolder.add(this.wallParams, 'posY').min(-5).max(10).step(0.01).name('Height Offset (Y)').onChange(updateWallVisuals).onFinishChange(updateWallPhysics)
+            wallFolder.add(this.wallParams, 'netOffsetY').min(-5).max(5).step(0.01).name('Floor Net Offset Y').onFinishChange(updateWallPhysics)
             wallFolder.add(this.wallMaterial, 'opacity').min(0).max(1).step(0.01).name('Debug Opacity')
             
             const shadowFolder = this.debugFolder.addFolder('Shadow')

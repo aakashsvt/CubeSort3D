@@ -13,7 +13,7 @@ export default class BinManager {
             scale: 2.6,
             groupPosX: 0,
             groupPosY: -1.0,
-            groupPosZ: 5,
+            groupPosZ: 4.8,
             groupRotX: 0.45,
             groupRotY: 0,
             groupRotZ: 0,
@@ -23,11 +23,11 @@ export default class BinManager {
             shadowY: 0.009,
             shadowZ: 0.005,
             binRotationX: 0,
-            shadowScaleX: 0.98,
+            shadowScaleX: 0.95,
             shadowScaleY: 1,
             shadowScaleZ: 1,
             shadowAlphaTest: 0,
-            shadowOpacity: 0.66
+            shadowOpacity: 0.55
         }
 
         this.originalModel = this.resources.items.binModel.scene
