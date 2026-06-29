@@ -9,10 +9,12 @@
   },
   "devDependencies": {
     "vite": "^5.4.21",
-    "vite-plugin-restart": "^0.4.2"
+    "vite-plugin-restart": "^0.4.2",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.6.0"
   },
   "dependencies": {
-    "@dimforge/rapier3d-compat": "^0.19.3",
+    "@dimforge/rapier3d": "^0.19.3",
     "lil-gui": "^0.21.0",
     "three": "^0.184.0"
   }

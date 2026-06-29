@@ -1,6 +1,7 @@
 import Experience from '../Experience.js'
 import * as THREE from 'three'
-import RAPIER from '@dimforge/rapier3d-compat'
+
+let RAPIER;
 
 export default class PhysicsWorld {
     constructor() {
@@ -53,7 +54,7 @@ export default class PhysicsWorld {
     }
 
     async init() {
-        await RAPIER.init()
+        RAPIER = await import('@dimforge/rapier3d')
         
         const gravity = { x: 0.0, y: this.physicsParams.gravity, z: 0.0 }
         this.world = new RAPIER.World(gravity)
