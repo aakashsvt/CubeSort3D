@@ -80,7 +80,7 @@ export default class PhysicsWorld {
         rouletteModel.traverse((child) => {
             if (child.isMesh) {
                 // Compute bounds for safety net (only using visual model, not invisible wall)
-                if (child.name !== 'InvisibleWall') {
+                if (child.name !== 'InvisibleWall' && child.name !== 'DeflectorCone') {
                     child.geometry.computeBoundingBox()
                     const childBox = child.geometry.boundingBox.clone()
                     childBox.applyMatrix4(child.matrix)
@@ -118,8 +118,8 @@ export default class PhysicsWorld {
                 let colliderDesc = RAPIER.ColliderDesc.trimesh(verticesFloat32, indicesUint32)
                 colliderDesc.setRestitution(0.1)
                 
-                if (child.name === 'InvisibleWall') {
-                    colliderDesc.setFriction(0.0) // Slippery wall
+                if (child.name === 'InvisibleWall' || child.name === 'DeflectorCone') {
+                    colliderDesc.setFriction(0.0) // Slippery wall/cone
                 } else {
                     colliderDesc.setFriction(5.0) // Normal friction
                     colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Max)
