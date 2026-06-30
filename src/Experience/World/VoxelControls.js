@@ -83,7 +83,7 @@ export default class VoxelControls {
 
     handleClick(event) {
         if (!this.voxelLevel.instancedMesh) return
-        if (this.physicsWorld && !this.physicsWorld.world) return
+        if (this.physicsWorld && (!this.physicsWorld.world || !this.physicsWorld.rouletteBody)) return
 
         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1
         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1

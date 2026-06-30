@@ -59,12 +59,21 @@ export default class PhysicsWorld {
     createRouletteBody(rouletteGroup, rouletteModel, netOffsetY = 0) {
         if (!this.world) return
 
-        let bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
-        this.rouletteBody = this.world.createRigidBody(bodyDesc)
         this.rouletteGroup = rouletteGroup
         this.rouletteModel = rouletteModel
+        this.rouletteGroup.updateMatrixWorld(true)
+        this.rouletteModel.updateMatrixWorld(true)
 
-        rouletteModel.updateMatrixWorld(true)
+        const pos = new THREE.Vector3()
+        const quat = new THREE.Quaternion()
+        const scale = new THREE.Vector3()
+        this.rouletteModel.matrixWorld.decompose(pos, quat, scale)
+
+        let bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
+            .setTranslation(pos.x, pos.y, pos.z)
+            .setRotation(quat)
+
+        this.rouletteBody = this.world.createRigidBody(bodyDesc)
 
         const localBox = new THREE.Box3()
 
