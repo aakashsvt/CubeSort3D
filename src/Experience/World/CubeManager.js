@@ -131,8 +131,8 @@ export default class CubeManager {
             const translation = item.body.translation()
             const rotation = item.body.rotation()
             
-            if (translation.y < 1.5) {
-                this.applyConveyorPhysics(item, translation, rouletteCenter, rotationQuat, dt)
+            if (translation.y < 0.5) {
+                // Let the physics engine handle the roulette rotation friction naturally
                 
                 item.timeOnRoulette += dt
                 if (item.timeOnRoulette > 0.8) {
