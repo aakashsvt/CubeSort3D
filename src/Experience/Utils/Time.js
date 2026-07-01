@@ -23,6 +23,12 @@ export default class Time extends EventEmitter
         const currentTime = Date.now()
         this.delta = currentTime - this.current
         this.current = currentTime
+
+        // Cap the delta time to prevent physics explosions when returning to the tab
+        if(this.delta > 60) {
+            this.delta = 16
+        }
+
         this.elapsed = this.current - this.start
 
         this.trigger('tick')
