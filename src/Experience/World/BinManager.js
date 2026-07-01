@@ -32,7 +32,14 @@ export default class BinManager {
             labelPosX: 0.0,
             labelPosY: 0.23,
             labelPosZ: 0.3,
-            labelRotX: -0.5
+            customLabelOffsetX_0: 0.025,
+            customLabelOffsetX_1: 0.01,
+            customLabelOffsetX_2: -0.005,
+            customLabelOffsetX_3: -0.02,
+            customLabelOffsetX_4: 0.0,
+            customLabelOffsetX_5: 0.0,
+            customLabelOffsetY_Row0: -0.005,
+            customLabelOffsetY_Row1: 0.01
         }
 
         this.originalModel = this.resources.items.binModel.scene
@@ -310,15 +317,26 @@ export default class BinManager {
             item.colorBin.setShadowScale(this.debugSettings.shadowScaleX, this.debugSettings.shadowScaleY, this.debugSettings.shadowScaleZ)
             item.colorBin.setRotationX(this.debugSettings.binRotationX)
 
+            let customOffsetX = 0
+            if (item.rIndex === 0) customOffsetX = this.debugSettings.customLabelOffsetX_0
+            else if (item.rIndex === 1) customOffsetX = this.debugSettings.customLabelOffsetX_1
+            else if (item.rIndex === 2) customOffsetX = this.debugSettings.customLabelOffsetX_2
+            else if (item.rIndex === 3) customOffsetX = this.debugSettings.customLabelOffsetX_3
+            else if (item.rIndex === 4) customOffsetX = this.debugSettings.customLabelOffsetX_4
+            else if (item.rIndex === 5) customOffsetX = this.debugSettings.customLabelOffsetX_5
+
+            let customOffsetY = 0
+            if (item.queueIndex === 0) customOffsetY = this.debugSettings.customLabelOffsetY_Row0
+            else if (item.queueIndex === 1) customOffsetY = this.debugSettings.customLabelOffsetY_Row1
+
             // Label positioning
             item.colorBin.labelMesh.position.set(
-                posX + this.debugSettings.labelPosX,
-                this.debugSettings.labelPosY,
+                posX + this.debugSettings.labelPosX + customOffsetX,
+                this.debugSettings.labelPosY + customOffsetY,
                 posZ + this.debugSettings.labelPosZ
             )
             // The canvas is 256x128 (2:1 aspect ratio), so we multiply X by 2
             item.colorBin.labelMesh.scale.set(this.debugSettings.labelScale * 2, this.debugSettings.labelScale, 1)
-            item.colorBin.labelMesh.rotation.x = this.debugSettings.labelRotX
             
             // Only render 2 rows at a time (queueIndex 0 and 1)
             item.colorBin.setVisible(item.queueIndex >= 0 && item.queueIndex < 2)
@@ -413,6 +431,33 @@ export default class BinManager {
         labelFolder.add(this.debugSettings, 'labelPosX').min(-2).max(2).step(0.01).name('Pos X').onChange(() => this.updateLayout())
         labelFolder.add(this.debugSettings, 'labelPosY').min(-2).max(2).step(0.01).name('Pos Y').onChange(() => this.updateLayout())
         labelFolder.add(this.debugSettings, 'labelPosZ').min(-2).max(2).step(0.01).name('Pos Z').onChange(() => this.updateLayout())
-        labelFolder.add(this.debugSettings, 'labelRotX').min(-Math.PI).max(Math.PI).step(0.01).name('Rot X').onChange(() => this.updateLayout())
+
+        const customFolder = labelFolder.addFolder('Custom Column Offsets')
+        customFolder.add(this.debugSettings, 'customLabelOffsetX_0').min(-1).max(1).step(0.001).name('Column 0 X').onChange(() => this.updateLayout())
+        customFolder.add(this.debugSettings, 'customLabelOffsetX_1').min(-1).max(1).step(0.001).name('Column 1 X').onChange(() => this.updateLayout())
+        customFolder.add(this.debugSettings, 'customLabelOffsetX_2').min(-1).max(1).step(0.001).name('Column 2 X').onChange(() => this.updateLayout())
+        customFolder.add(this.debugSettings, 'customLabelOffsetX_3').min(-1).max(1).step(0.001).name('Column 3 X').onChange(() => this.updateLayout())
+        customFolder.add(this.debugSettings, 'customLabelOffsetX_4').min(-1).max(1).step(0.001).name('Column 4 X').onChange(() => this.updateLayout())
+        customFolder.add(this.debugSettings, 'customLabelOffsetX_5').min(-1).max(1).step(0.001).name('Column 5 X').onChange(() => this.updateLayout())
+        
+        customFolder.add(this.debugSettings, 'customLabelOffsetY_Row0').min(-1).max(1).step(0.001).name('Row 0 Y').onChange(() => this.updateLayout())
+        customFolder.add(this.debugSettings, 'customLabelOffsetY_Row1').min(-1).max(1).step(0.001).name('Row 1 Y').onChange(() => this.updateLayout())
+    }
+
+    update() {
+        if (!this.spawnedBins || !this.experience.camera || !this.experience.camera.instance) return;
+
+        const camera = this.experience.camera.instance;
+        const target = new THREE.Vector3();
+        const worldPos = new THREE.Vector3();
+
+        for (const item of this.spawnedBins) {
+            if (item.queueIndex >= 0 && item.queueIndex < 2) {
+                target.copy(camera.position);
+                item.colorBin.labelMesh.getWorldPosition(worldPos);
+                target.y = worldPos.y; // Only look in X and Z
+                item.colorBin.labelMesh.lookAt(target);
+            }
+        }
     }
 }

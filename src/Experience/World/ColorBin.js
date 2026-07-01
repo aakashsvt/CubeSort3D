@@ -39,7 +39,7 @@ export default class ColorBin {
         this.canvasContext.fillStyle = 'black'
         this.canvasContext.fillRect(0, 0, 256, 128)
         this.canvasContext.fillStyle = 'white'
-        this.canvasContext.font = 'bold 70px Arial'
+        this.canvasContext.font = 'normal 70px Arial'
         this.canvasContext.textAlign = 'center'
         this.canvasContext.textBaseline = 'middle'
         this.canvasContext.fillText(`${percent}%`, 128, 64)

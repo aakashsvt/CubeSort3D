@@ -34,6 +34,7 @@ export default class World
     update()
     {
         if(this.physicsWorld) this.physicsWorld.update()
+        if(this.binManager) this.binManager.update()
         if(this.cubeManager) this.cubeManager.update(1 / 60)
         if(this.voxelLevel) this.voxelLevel.update?.()
         if(this.voxelControls) this.voxelControls.update()
