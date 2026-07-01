@@ -49,8 +49,11 @@ export default class CubeManager {
         dynMaterial.vertexColors = false
         this.dynamicInstancedMesh = new THREE.InstancedMesh(geometry, dynMaterial, maxCubes)
         this.dynamicInstancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-        this.dynamicInstancedMesh.castShadow = true
-        this.dynamicInstancedMesh.receiveShadow = true
+        // OPTIMIZATION: Disable dynamic shadows for cubes on the roulette. 
+        // Rendering shadows for 150+ instanced cubes dynamically every frame causes massive GPU lag.
+        // This also matches the 'castShadows: false' setting in level.json.
+        this.dynamicInstancedMesh.castShadow = false
+        this.dynamicInstancedMesh.receiveShadow = false
 
         this.dummy.scale.set(0, 0, 0)
         this.dummy.updateMatrix()
@@ -88,7 +91,7 @@ export default class CubeManager {
                     item.colorBin.currentCount++
                     item.colorBin.updateLabelText()
                     this.binManager.updateLayout()
-                    console.log('Internal cubes count:', this.binManager.internalCubeInstancedMesh?.count, 'Visible:', Math.min(item.colorBin.currentCount, this.binManager.internalCubeTransforms?.length || 0))
+                    // console.log('Internal cubes count:', this.binManager.internalCubeInstancedMesh?.count, 'Visible:', Math.min(item.colorBin.currentCount, this.binManager.internalCubeTransforms?.length || 0))
 
                     this.binManager.binsGroup.updateMatrixWorld(true)
                     const binPos = new THREE.Vector3()
@@ -170,6 +173,15 @@ export default class CubeManager {
                 // Let the physics engine handle the roulette rotation friction naturally
 
                 item.timeOnRoulette += dt
+
+                // OPTIMIZATION: Disable self-collision after cube settles on tray
+                if (item.timeOnRoulette > 0.5 && !item.isOptimized) {
+                    item.isOptimized = true
+                    if (this.physicsWorld && this.physicsWorld.setCubeNoSelfCollision) {
+                        this.physicsWorld.setCubeNoSelfCollision(item.body)
+                    }
+                }
+
                 if (item.timeOnRoulette > 0.8) {
                     const timer = this.colorRouteTimers[item.colorHex] || 0
                     if (timer <= 0) {
@@ -193,7 +205,8 @@ export default class CubeManager {
             this.dummy.position.set(translation.x, translation.y, translation.z)
             this.dummy.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w)
             this.dummy.scale.set(item.scaleFactor, item.scaleFactor, item.scaleFactor)
-            this.dummy.updateMatrix()
+            // OPTIMIZATION: direct compose instead of dummy.updateMatrix() which avoids heavy THREE.js overhead
+            this.dummy.matrix.compose(this.dummy.position, this.dummy.quaternion, this.dummy.scale)
             this.dynamicInstancedMesh.setMatrixAt(item.instanceId, this.dummy.matrix)
         }
         this.dynamicInstancedMesh.instanceMatrix.needsUpdate = true

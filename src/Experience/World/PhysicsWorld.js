@@ -176,8 +176,19 @@ export default class PhysicsWorld {
         colliderDesc.setRestitution(this.physicsParams.restitution)
         colliderDesc.setFriction(this.physicsParams.friction)
         this.world.createCollider(colliderDesc, body)
-        
         return body
+    }
+
+    setCubeNoSelfCollision(body) {
+        if (!body || !this.world) return
+        for (let i = 0; i < body.numColliders(); i++) {
+            let collider = body.collider(i)
+            // Rapier collisionGroups: upper 16 bits = membership, lower 16 bits = filter.
+            // Membership = 2 (0x0002)
+            // Filter = everything except 2 (0xFFFD)
+            // Combined = 0x0002FFFD
+            collider.setCollisionGroups(0x0002FFFD)
+        }
     }
 
     update() {
