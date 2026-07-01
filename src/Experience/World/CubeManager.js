@@ -19,7 +19,9 @@ export default class CubeManager {
 
         // Staggering delay
         this.routeStaggerDelay = 0.05
+        this.routeBatchSize = 3
         this.colorRouteTimers = {}
+        this.colorRouteBatchCounters = {}
     }
 
     setupDynamicMesh(geometry, material, maxCubes) {
@@ -107,6 +109,9 @@ export default class CubeManager {
         for (const hex in this.colorRouteTimers) {
             if (this.colorRouteTimers[hex] > 0) {
                 this.colorRouteTimers[hex] -= dt
+                if (this.colorRouteTimers[hex] <= 0) {
+                    this.colorRouteBatchCounters[hex] = 0
+                }
             }
         }
 
@@ -140,7 +145,12 @@ export default class CubeManager {
                     if (timer <= 0) {
                         const binPos = this.getAvailableBinPositionForColor(item.colorHex)
                         if (binPos) {
-                            this.colorRouteTimers[item.colorHex] = this.routeStaggerDelay
+                            this.colorRouteBatchCounters[item.colorHex] = (this.colorRouteBatchCounters[item.colorHex] || 0) + 1
+                            
+                            if (this.colorRouteBatchCounters[item.colorHex] >= this.routeBatchSize) {
+                                this.colorRouteTimers[item.colorHex] = this.routeStaggerDelay
+                            }
+                            
                             this.physicsWorld.world.removeRigidBody(item.body)
                             item.body = null
                             this.routingStrategy.startRouting(item, new THREE.Vector3(translation.x, translation.y, translation.z), binPos)
