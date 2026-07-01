@@ -3,7 +3,7 @@ import * as THREE from 'three'
 export default class AnimatedRoutingStrategy {
     constructor() {
         this.duration = 0.35
-        this.arcHeight = 3.0
+        this.arcHeight = 1.0
     }
 
     startRouting(item, startPos, targetPos) {
