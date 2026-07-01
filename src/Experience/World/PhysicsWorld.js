@@ -10,7 +10,7 @@ export default class PhysicsWorld {
         this.time = this.experience.time
         this.world = null
         this.physicsParams = {
-            gravity: -30.0,
+            gravity: -60.0,
             restitution: 0.1,
             friction: 0.6,
             debugRender: false
