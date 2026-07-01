@@ -136,8 +136,9 @@ export default class VoxelControls {
                     const color = new THREE.Color()
                     this.voxelLevel.instancedMesh.getColorAt(c.instanceId, color)
                     
-                    const visualScale = scale.x
-                    const colliderSize = this.voxelLevel.cubeSize * scale.x
+                    const targetScale = 0.75
+                    const visualScale = scale.x * targetScale
+                    const colliderSize = this.voxelLevel.cubeSize * scale.x * targetScale
 
                     this.spawnQueue.push({
                         instanceId: c.instanceId,
