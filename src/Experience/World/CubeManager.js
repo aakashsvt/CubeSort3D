@@ -15,13 +15,31 @@ export default class CubeManager {
         this.routingStrategy = new AnimatedRoutingStrategy()
 
         this.conveyorOmega = 2.0 // matches Roulette.js speed 
-        this.availableInstanceIds = []
-
+        this.availableInstanceIds = [] 
         // Staggering delay
         this.routeStaggerDelay = 0.05
         this.routeBatchSize = 3
         this.colorRouteTimers = {}
         this.colorRouteBatchCounters = {}
+
+        // Temporary Tray Capacity Logic
+        const levelData = this.binManager?.resources?.items?.levelData || {}
+        const dashboard = levelData.dashboard || {}
+        this.maxTrayCapacity = dashboard.trayCapacityCubes || 50
+        
+        this.trayUiContainer = document.createElement('div')
+        this.trayUiContainer.style.position = 'absolute'
+        this.trayUiContainer.style.top = '10px'
+        this.trayUiContainer.style.left = '10px'
+        this.trayUiContainer.style.color = 'white'
+        this.trayUiContainer.style.backgroundColor = 'rgba(0,0,0,0.6)'
+        this.trayUiContainer.style.padding = '10px'
+        this.trayUiContainer.style.fontFamily = 'monospace'
+        this.trayUiContainer.style.fontSize = '16px'
+        this.trayUiContainer.style.zIndex = '99999'
+        this.trayUiContainer.style.pointerEvents = 'none'
+        this.trayUiContainer.innerHTML = `Roulette Capacity: 0 / ${this.maxTrayCapacity}`
+        document.body.appendChild(this.trayUiContainer)
     }
 
     setupDynamicMesh(geometry, material, maxCubes) {
@@ -104,7 +122,19 @@ export default class CubeManager {
     }
 
     update(dt) {
-        if (!this.dynamicInstancedMesh || this.dynamicCubes.length === 0) return
+        let currentCount = this.dynamicCubes ? this.dynamicCubes.length : 0
+        if (this.trayUiContainer) {
+            this.trayUiContainer.innerHTML = `Roulette Capacity: ${currentCount} / ${this.maxTrayCapacity}`
+            if (currentCount > this.maxTrayCapacity) {
+                this.trayUiContainer.style.color = 'red'
+                this.trayUiContainer.innerHTML += '<br><b>[OVER CAPACITY! LEVEL FAILED]</b>'
+            } else {
+                this.trayUiContainer.style.color = 'white'
+            }
+        }
+
+        if (!this.dynamicInstancedMesh) return
+        if (this.dynamicCubes.length === 0) return
 
         for (const hex in this.colorRouteTimers) {
             if (this.colorRouteTimers[hex] > 0) {
