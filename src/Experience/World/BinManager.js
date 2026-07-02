@@ -299,20 +299,14 @@ export default class BinManager {
         const index = this.spawnedBins.findIndex(i => i.rIndex === rIndex && i.queueIndex === 0)
         if (index !== -1) {
             const exitingItem = this.spawnedBins.splice(index, 1)[0]
-            exitingItem.exitPhase = 0
+            exitingItem.exitPhase = -1 // Start with 200ms wait phase
             exitingItem.exitTimer = 0
             exitingItem.startX = exitingItem.colorBin.position.x
             exitingItem.startY = exitingItem.colorBin.position.y
             exitingItem.startZ = exitingItem.colorBin.position.z
+            exitingItem.advancingRowIndex = rIndex // Store which row to advance later
             this.exitingBins.push(exitingItem)
         }
-
-        for (const item of this.spawnedBins) {
-            if (item.rIndex === rIndex) {
-                item.queueIndex--
-            }
-        }
-        this.updateLayout()
     }
 
     updateLayout(immediate = false) {
@@ -342,12 +336,10 @@ export default class BinManager {
             if (item.queueIndex === 0) customOffsetY = this.debugSettings.customLabelOffsetY_Row0
             else if (item.queueIndex === 1) customOffsetY = this.debugSettings.customLabelOffsetY_Row1
 
-            // Label positioning
-            item.colorBin.labelMesh.position.set(
-                posX + this.debugSettings.labelPosX + customOffsetX,
-                this.debugSettings.labelPosY + customOffsetY,
-                posZ + this.debugSettings.labelPosZ
-            )
+            // Save label offsets for update loop instead of setting position here
+            item.colorBin.labelOffsetX = this.debugSettings.labelPosX + customOffsetX
+            item.colorBin.labelOffsetY = this.debugSettings.labelPosY + customOffsetY
+            item.colorBin.labelOffsetZ = this.debugSettings.labelPosZ
             // The canvas is 256x128 (2:1 aspect ratio), so we multiply X by 2
             item.colorBin.labelMesh.scale.set(this.debugSettings.labelScale * 2, this.debugSettings.labelScale, 1)
 
@@ -499,13 +491,6 @@ export default class BinManager {
                 item.colorBin.position.lerp(item.colorBin.targetPosition, 7.5 * dt); // Adjust shift forward speed
                 needsMatrixUpdate = true;
             }
-
-            if (item.queueIndex >= 0 && item.queueIndex < 2) {
-                target.copy(camera.position);
-                item.colorBin.labelMesh.getWorldPosition(worldPos);
-                target.y = worldPos.y; // Only look in X and Z
-                item.colorBin.labelMesh.lookAt(target);
-            }
         }
 
         for (let i = this.exitingBins.length - 1; i >= 0; i--) {
@@ -513,12 +498,18 @@ export default class BinManager {
             item.exitTimer += dt;
             needsMatrixUpdate = true;
 
+            const waitDuration = 0.2; // 200ms delay
             const upDuration = 0.35; // Adjusted upward speed
             const sidewaysDuration = 0.7; // Adjusted sideways speed
             const upOffset = 0.25; // Reduced to 0.25
             const sidewaysOffset = 6.0; // Push further off screen before cleanup
 
-            if (item.exitPhase === 0) {
+            if (item.exitPhase === -1) {
+                if (item.exitTimer >= waitDuration) {
+                    item.exitPhase = 0;
+                    item.exitTimer = 0;
+                }
+            } else if (item.exitPhase === 0) {
                 const t = Math.min(item.exitTimer / upDuration, 1.0);
                 const easeT = 1 - (1 - t) * (1 - t);
                 item.colorBin.position.y = item.startY + easeT * upOffset;
@@ -529,6 +520,17 @@ export default class BinManager {
                     item.exitPhase = 1;
                     item.exitTimer = 0;
                     item.startY = item.colorBin.position.y;
+                    
+                    // Advance the remaining bins in this row now that the filled bin is moving out
+                    if (item.advancingRowIndex !== undefined) {
+                        for (const spawnedItem of this.spawnedBins) {
+                            if (spawnedItem.rIndex === item.advancingRowIndex) {
+                                spawnedItem.queueIndex--;
+                            }
+                        }
+                        this.updateLayout();
+                        item.advancingRowIndex = undefined;
+                    }
                 }
             } else if (item.exitPhase === 1) {
                 const t = Math.min(item.exitTimer / sidewaysDuration, 1.0);
@@ -562,6 +564,18 @@ export default class BinManager {
         if (needsMatrixUpdate || true) {
             const allItems = [...this.spawnedBins, ...this.exitingBins];
             for (const item of allItems) {
+                if (item.colorBin.visible) {
+                    item.colorBin.labelMesh.position.set(
+                        item.colorBin.position.x + (item.colorBin.labelOffsetX || 0),
+                        item.colorBin.position.y + (item.colorBin.labelOffsetY || 0),
+                        item.colorBin.position.z + (item.colorBin.labelOffsetZ || 0)
+                    );
+                    target.copy(camera.position);
+                    item.colorBin.labelMesh.getWorldPosition(worldPos);
+                    target.y = worldPos.y; 
+                    item.colorBin.labelMesh.lookAt(target);
+                }
+
                 item.colorBin.updateMatrices();
                 this.binInstancedMeshes.forEach(m => m.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.matrix));
                 this.shadowInstancedMeshes.forEach(m => m.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.shadowMatrix));
