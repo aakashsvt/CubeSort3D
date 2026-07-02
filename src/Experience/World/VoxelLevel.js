@@ -65,6 +65,19 @@ export default class VoxelLevel {
         this.cubeSize = dashboard.cubeSize || 1
         const palette = dashboard.palette || []
 
+        // Apply rotation from JSON if available (converting from degrees to radians)
+        if (dashboard.modelRotationEuler) {
+            const rot = dashboard.modelRotationEuler
+            this.container.rotation.set(
+                THREE.MathUtils.degToRad(rot.x),
+                THREE.MathUtils.degToRad(rot.y),
+                THREE.MathUtils.degToRad(rot.z)
+            )
+        } else {
+            // Default fallback
+            this.container.rotation.set(-2.10, -0.64, -1.26)
+        }
+
         // We look for lastGeneratedCubes, but fall back to cubes just in case
         const cubesData = dashboard.lastGeneratedCubes || json.cubes || []
 
