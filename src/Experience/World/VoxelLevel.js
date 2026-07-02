@@ -78,6 +78,9 @@ export default class VoxelLevel {
             this.container.rotation.set(-2.10, -0.64, -1.26)
         }
 
+        // Fallback to default scale
+        this.container.scale.set(0.335, 0.335, 0.335)
+
         // We look for lastGeneratedCubes, but fall back to cubes just in case
         const cubesData = dashboard.lastGeneratedCubes || json.cubes || []
 
@@ -163,6 +166,7 @@ export default class VoxelLevel {
                 (y - centerY) * this.cubeSize,
                 (z - centerZ) * this.cubeSize
             )
+            // Reverted to 1, as the scale is handled by the container
             dummy.scale.set(1, 1, 1)
             dummy.updateMatrix()
             this.instancedMesh.setMatrixAt(i, dummy.matrix)
