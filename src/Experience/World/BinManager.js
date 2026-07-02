@@ -376,6 +376,35 @@ export default class BinManager {
         if (this.internalCubeInstancedMesh) this.internalCubeInstancedMesh.instanceMatrix.needsUpdate = true
     }
 
+    getBinItemForColorHex(colorHex) {
+        if (!this.roundRobinIndices) {
+            this.roundRobinIndices = {}
+        }
+
+        const validItems = []
+
+        for (const item of this.spawnedBins) {
+            if (item.queueIndex === 0 && 
+                item.colorBin.color.getHex() === colorHex && 
+                item.colorBin.currentCount < item.colorBin.capacity) 
+            {
+                validItems.push(item)
+            }
+        }
+
+        if (validItems.length === 0) return null
+
+        let lastIndex = this.roundRobinIndices[colorHex]
+        if (lastIndex === undefined) {
+            lastIndex = -1
+        }
+
+        lastIndex = (lastIndex + 1) % validItems.length
+        this.roundRobinIndices[colorHex] = lastIndex
+
+        return validItems[lastIndex]
+    }
+
     setDebug() {
         if (!this.debug.active) return
 

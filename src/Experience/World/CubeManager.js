@@ -85,27 +85,24 @@ export default class CubeManager {
     getAvailableBinPositionForColor(colorHex) {
         if (!this.binManager || !this.binManager.spawnedBins) return null
 
-        for (const item of this.binManager.spawnedBins) {
-            if (item.colorBin.color.getHex() === colorHex && item.queueIndex === 0) {
-                if (item.colorBin.currentCount < item.colorBin.capacity) {
-                    item.colorBin.currentCount++
-                    item.colorBin.updateLabelText()
-                    this.binManager.updateLayout()
-                    // console.log('Internal cubes count:', this.binManager.internalCubeInstancedMesh?.count, 'Visible:', Math.min(item.colorBin.currentCount, this.binManager.internalCubeTransforms?.length || 0))
+        const item = this.binManager.getBinItemForColorHex(colorHex)
+        if (item) {
+            item.colorBin.currentCount++
+            item.colorBin.updateLabelText()
+            this.binManager.updateLayout()
+            // console.log('Internal cubes count:', this.binManager.internalCubeInstancedMesh?.count, 'Visible:', Math.min(item.colorBin.currentCount, this.binManager.internalCubeTransforms?.length || 0))
 
-                    this.binManager.binsGroup.updateMatrixWorld(true)
-                    const binPos = new THREE.Vector3()
-                    binPos.setFromMatrixPosition(item.colorBin.matrix)
-                    binPos.applyMatrix4(this.binManager.binsGroup.matrixWorld)
-                    binPos.y += 0.5
+            this.binManager.binsGroup.updateMatrixWorld(true)
+            const binPos = new THREE.Vector3()
+            binPos.setFromMatrixPosition(item.colorBin.matrix)
+            binPos.applyMatrix4(this.binManager.binsGroup.matrixWorld)
+            binPos.y += 0.5
 
-                    if (item.colorBin.currentCount >= item.colorBin.capacity) {
-                        this.binManager.advanceQueue(item.rIndex)
-                    }
-
-                    return binPos
-                }
+            if (item.colorBin.currentCount >= item.colorBin.capacity) {
+                this.binManager.advanceQueue(item.rIndex)
             }
+
+            return binPos
         }
         return null
     }
