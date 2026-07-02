@@ -14,11 +14,15 @@ export default class VoxelLevel {
         this.spinGroup.position.set(0, 3, -0.94)
         this.scene.add(this.spinGroup)
 
-        // Inner container handles the permanent tilt/scale of the model
+        // Inner container handles the scale of the model
         this.container = new THREE.Group()
         this.container.scale.set(0.335, 0.335, 0.335)
-        this.container.rotation.set(-2.10, -0.64, -1.26)
+        this.container.rotation.set(0, 0, 0)
         this.spinGroup.add(this.container)
+
+        // Model group handles the rotation from the JSON
+        this.modelGroup = new THREE.Group()
+        this.container.add(this.modelGroup)
 
         // Debug
         if (this.debug.active) {
@@ -65,21 +69,24 @@ export default class VoxelLevel {
         this.cubeSize = dashboard.cubeSize || 1
         const palette = dashboard.palette || []
 
-        // Apply rotation from JSON if available (converting from degrees to radians)
-        if (dashboard.modelRotationEuler) {
-            const rot = dashboard.modelRotationEuler
-            this.container.rotation.set(
-                THREE.MathUtils.degToRad(rot.x),
-                THREE.MathUtils.degToRad(rot.y),
-                THREE.MathUtils.degToRad(rot.z)
-            )
-        } else {
-            // Default fallback
-            this.container.rotation.set(-2.10, -0.64, -1.26)
-        }
-
         // Fallback to default scale
         this.container.scale.set(0.335, 0.335, 0.335)
+
+        // Ensure container has 0 rotation (no isometric tilt), as requested by user
+        this.container.rotation.set(0, 0, 0)
+
+        // Apply Unity model rotation to the inner group if available (Left-Handed to Right-Handed conversion)
+        if (dashboard.modelRotationEuler) {
+            const rot = dashboard.modelRotationEuler
+            this.modelGroup.rotation.set(
+                THREE.MathUtils.degToRad(-rot.x),
+                THREE.MathUtils.degToRad(rot.y),
+                THREE.MathUtils.degToRad(-rot.z),
+                'XYZ'
+            )
+        } else {
+            this.modelGroup.rotation.set(0, 0, 0)
+        }
 
         // We look for lastGeneratedCubes, but fall back to cubes just in case
         const cubesData = dashboard.lastGeneratedCubes || json.cubes || []
@@ -204,7 +211,7 @@ export default class VoxelLevel {
         this.instancedMesh.instanceMatrix.needsUpdate = true
         this.instancedMesh.instanceColor.needsUpdate = true
 
-        this.container.add(this.instancedMesh)
+        this.modelGroup.add(this.instancedMesh)
 
         // Material debug
         if (this.debug && this.debug.active && !this.materialDebugFolder) {
@@ -231,19 +238,19 @@ export default class VoxelLevel {
             // Add debug single cube
             const debugCube = new THREE.Mesh(geometry, material)
             debugCube.position.set(0, 0, 0)
-            this.container.add(debugCube)
+            this.modelGroup.add(debugCube)
             this.debugObjects.push(debugCube)
 
             // Add bounding box for debug cube
             const debugCubeBoxHelper = new THREE.BoxHelper(debugCube, 0xff0000)
-            this.container.add(debugCubeBoxHelper)
+            this.modelGroup.add(debugCubeBoxHelper)
             this.debugObjects.push(debugCubeBoxHelper)
 
             // Add bounding box helper for instanced mesh
             this.instancedMesh.computeBoundingSphere()
             this.instancedMesh.computeBoundingBox()
             const instancedBoxHelper = new THREE.BoxHelper(this.instancedMesh, 0x00ff00)
-            this.container.add(instancedBoxHelper)
+            this.modelGroup.add(instancedBoxHelper)
             this.debugObjects.push(instancedBoxHelper)
         }
     }
@@ -258,7 +265,7 @@ export default class VoxelLevel {
                     this.instancedMesh.material.dispose()
                 }
             }
-            this.container.remove(this.instancedMesh)
+            this.modelGroup.remove(this.instancedMesh)
             this.instancedMesh = null
         }
         // Clear debug objects
@@ -271,7 +278,7 @@ export default class VoxelLevel {
                     obj.material.dispose()
                 }
             }
-            this.container.remove(obj)
+            this.modelGroup.remove(obj)
         }
         this.debugObjects = []
         this.cubes = []

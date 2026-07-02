@@ -21,7 +21,7 @@ export default class Roulette {
         this.coneParams = {
             radius: 0.45,
             height: 0.5,
-            posY: 0.6
+            posY: 0.3
         }
 
         this.speed = 2
