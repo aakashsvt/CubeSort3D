@@ -515,7 +515,7 @@ export default class BinManager {
 
             const upDuration = 0.35; // Adjusted upward speed
             const sidewaysDuration = 0.7; // Adjusted sideways speed
-            const upOffset = 1.0;
+            const upOffset = 0.25; // Reduced to 0.25
             const sidewaysOffset = 6.0; // Push further off screen before cleanup
 
             if (item.exitPhase === 0) {
