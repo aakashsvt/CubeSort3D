@@ -2,7 +2,7 @@ export default [
     {
         name: 'levelData',
         type: 'json',
-        path: 'level data/level.json'
+        path: 'level data/Rubik_Cube.json'
     },
     {
         name: 'rouletteModel',
