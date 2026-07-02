@@ -45,6 +45,8 @@ export default class BinManager {
         this.originalModel = this.resources.items.binModel.scene
         this.originalShadow = this.resources.items.binShadowModel.scene
 
+        this.exitingBins = []
+
         this.configureBins()
         this.setDebug()
     }
@@ -290,10 +292,21 @@ export default class BinManager {
         this.binsGroup.rotation.set(this.debugSettings.groupRotX, this.debugSettings.groupRotY, this.debugSettings.groupRotZ)
 
         this.scene.add(this.binsGroup)
-        this.updateLayout() // Initialize layout
+        this.updateLayout(true) // Initialize layout
     }
 
     advanceQueue(rIndex) {
+        const index = this.spawnedBins.findIndex(i => i.rIndex === rIndex && i.queueIndex === 0)
+        if (index !== -1) {
+            const exitingItem = this.spawnedBins.splice(index, 1)[0]
+            exitingItem.exitPhase = 0
+            exitingItem.exitTimer = 0
+            exitingItem.startX = exitingItem.colorBin.position.x
+            exitingItem.startY = exitingItem.colorBin.position.y
+            exitingItem.startZ = exitingItem.colorBin.position.z
+            this.exitingBins.push(exitingItem)
+        }
+
         for (const item of this.spawnedBins) {
             if (item.rIndex === rIndex) {
                 item.queueIndex--
@@ -302,14 +315,14 @@ export default class BinManager {
         this.updateLayout()
     }
 
-    updateLayout() {
-        const numRows = Math.min(this.activeBinCount, this.spawnedBins.length)
+    updateLayout(immediate = false) {
+        const numRows = this.activeBinCount
         const startX = -((numRows - 1) * this.debugSettings.rowSpacing) / 2
 
         for (const item of this.spawnedBins) {
             const posX = startX + (item.rIndex * this.debugSettings.rowSpacing)
             const posZ = item.queueIndex * this.debugSettings.queueSpacing
-            item.colorBin.setPosition(posX, 0, posZ)
+            item.colorBin.setPosition(posX, 0, posZ, immediate)
 
             item.colorBin.shadowOffsetX = this.debugSettings.shadowX
             item.colorBin.setShadowY(this.debugSettings.shadowY)
@@ -473,20 +486,107 @@ export default class BinManager {
         customFolder.add(this.debugSettings, 'customLabelOffsetY_Row1').min(-1).max(1).step(0.001).name('Row 1 Y').onChange(() => this.updateLayout())
     }
 
-    update() {
+    update(dt = 1/60) {
         if (!this.spawnedBins || !this.experience.camera || !this.experience.camera.instance) return;
 
         const camera = this.experience.camera.instance;
         const target = new THREE.Vector3();
         const worldPos = new THREE.Vector3();
 
+        let needsMatrixUpdate = false;
+
         for (const item of this.spawnedBins) {
+            if (item.colorBin.position.distanceToSquared(item.colorBin.targetPosition) > 0.0001) {
+                item.colorBin.position.lerp(item.colorBin.targetPosition, 7.5 * dt); // Adjust shift forward speed
+                needsMatrixUpdate = true;
+            }
+
             if (item.queueIndex >= 0 && item.queueIndex < 2) {
                 target.copy(camera.position);
                 item.colorBin.labelMesh.getWorldPosition(worldPos);
                 target.y = worldPos.y; // Only look in X and Z
                 item.colorBin.labelMesh.lookAt(target);
             }
+        }
+
+        for (let i = this.exitingBins.length - 1; i >= 0; i--) {
+            const item = this.exitingBins[i];
+            item.exitTimer += dt;
+            needsMatrixUpdate = true;
+
+            const upDuration = 0.35; // Adjusted upward speed
+            const sidewaysDuration = 0.7; // Adjusted sideways speed
+            const upOffset = 1.0; 
+            const sidewaysOffset = 6.0; // Push further off screen before cleanup
+
+            if (item.exitPhase === 0) {
+                const t = Math.min(item.exitTimer / upDuration, 1.0);
+                const easeT = 1 - (1 - t) * (1 - t);
+                item.colorBin.position.y = item.startY + easeT * upOffset;
+                
+                item.colorBin.shadowScale.set(1 - easeT, 1 - easeT, 1 - easeT);
+
+                if (t >= 1.0) {
+                    item.exitPhase = 1;
+                    item.exitTimer = 0;
+                    item.startY = item.colorBin.position.y;
+                }
+            } else if (item.exitPhase === 1) {
+                const t = Math.min(item.exitTimer / sidewaysDuration, 1.0);
+                const easeT = t * t;
+                const direction = item.rIndex < (this.activeBinCount / 2) ? -1 : 1;
+                item.colorBin.position.x = item.startX + direction * sidewaysOffset * easeT;
+
+                if (t >= 1.0) {
+                    item.exitPhase = 2;
+                    item.colorBin.setVisible(false);
+                    
+                    // Force the instanced matrices to 0 scale before we forget about this bin
+                    item.colorBin.updateMatrices();
+                    this.binInstancedMeshes.forEach(m => m.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.matrix));
+                    this.shadowInstancedMeshes.forEach(m => m.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.shadowMatrix));
+                    
+                    if (this.internalCubeInstancedMesh) {
+                        const numCubes = this.internalCubeTransforms.length;
+                        const tempMatrix = new THREE.Matrix4().makeScale(0, 0, 0);
+                        for (let j = 0; j < numCubes; j++) {
+                            const instanceId = item.colorBin.instanceIndex * numCubes + j;
+                            this.internalCubeInstancedMesh.setMatrixAt(instanceId, tempMatrix);
+                        }
+                    }
+
+                    this.exitingBins.splice(i, 1);
+                }
+            }
+        }
+
+        if (needsMatrixUpdate || true) {
+            const allItems = [...this.spawnedBins, ...this.exitingBins];
+            for (const item of allItems) {
+                item.colorBin.updateMatrices();
+                this.binInstancedMeshes.forEach(m => m.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.matrix));
+                this.shadowInstancedMeshes.forEach(m => m.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.shadowMatrix));
+                
+                if (this.internalCubeInstancedMesh) {
+                    const numCubes = this.internalCubeTransforms.length;
+                    const visibleCount = Math.min(item.colorBin.currentCount, numCubes);
+                    for (let j = 0; j < numCubes; j++) {
+                        const instanceId = item.colorBin.instanceIndex * numCubes + j;
+                        const isVisible = item.exitPhase !== undefined ? (item.exitPhase < 2) : (item.queueIndex >= 0 && item.queueIndex < 2);
+                        if (isVisible && j < visibleCount) {
+                            const localMat = this.internalCubeTransforms[j];
+                            const finalMat = new THREE.Matrix4().multiplyMatrices(item.colorBin.matrix, localMat);
+                            this.internalCubeInstancedMesh.setMatrixAt(instanceId, finalMat);
+                        } else {
+                            const tempMatrix = new THREE.Matrix4().makeScale(0, 0, 0);
+                            this.internalCubeInstancedMesh.setMatrixAt(instanceId, tempMatrix);
+                        }
+                    }
+                }
+            }
+            this.binInstancedMeshes.forEach(m => m.instanceMatrix.needsUpdate = true);
+            this.shadowInstancedMeshes.forEach(m => m.instanceMatrix.needsUpdate = true);
+            if (this.internalCubeInstancedMesh) this.internalCubeInstancedMesh.instanceMatrix.needsUpdate = true;
         }
     }
 }

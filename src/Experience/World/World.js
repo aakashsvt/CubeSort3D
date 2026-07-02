@@ -33,9 +33,10 @@ export default class World
 
     update()
     {
+        const dt = this.experience.time.delta / 1000 // Convert ms to seconds
         if(this.physicsWorld) this.physicsWorld.update()
-        if(this.binManager) this.binManager.update()
-        if(this.cubeManager) this.cubeManager.update(1 / 60)
+        if(this.binManager) this.binManager.update(dt)
+        if(this.cubeManager) this.cubeManager.update(dt)
         if(this.voxelLevel) this.voxelLevel.update?.()
         if(this.voxelControls) this.voxelControls.update()
         if(this.roulette) this.roulette.update()

@@ -11,6 +11,7 @@ export default class ColorBin {
         this.currentCount = 0
         
         this.position = new THREE.Vector3()
+        this.targetPosition = new THREE.Vector3()
         this.rotationX = 0
         this.shadowOffsetX = 0
         this.shadowY = 0
@@ -46,8 +47,11 @@ export default class ColorBin {
         this.labelTexture.needsUpdate = true
     }
 
-    setPosition(x, y, z) {
-        this.position.set(x, y, z)
+    setPosition(x, y, z, immediate = false) {
+        this.targetPosition.set(x, y, z)
+        if (immediate) {
+            this.position.copy(this.targetPosition)
+        }
     }
 
     setShadowY(y) {
