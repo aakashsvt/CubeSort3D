@@ -8,7 +8,7 @@ export default class BinManager {
         this.scene = this.experience.scene
         this.resources = this.experience.resources
         this.debug = this.experience.debug
-        
+
         this.debugSettings = {
             scale: 2.6,
             groupPosX: 0,
@@ -54,7 +54,7 @@ export default class BinManager {
     configureBins() {
         const levelData = this.resources.items.levelData
         const dashboard = levelData.dashboard || {}
-        
+
         const palette = dashboard.palette || []
         const binIndicesStr = dashboard.binColorIndicesInput || ""
         const configuredColorPool = binIndicesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
@@ -140,7 +140,7 @@ export default class BinManager {
                     unplannedDemand[c] -= cap
                 }
             })
-            
+
             // Add remaining unplanned demand
             for (const c of colorsWithDemand) {
                 while (unplannedDemand[c] > 0) {
@@ -159,14 +159,14 @@ export default class BinManager {
                         addedPlan = true
                     }
                 }
-            } while(addedPlan)
+            } while (addedPlan)
         }
 
         this.binsGroup = new THREE.Group()
         this.spawnedBins = []
 
         const maxInstances = binPlans.length;
-        
+
         this.binInstancedMeshes = [];
         this.internalCubeTransforms = [];
         let cubeGeo = null;
@@ -218,7 +218,7 @@ export default class BinManager {
                 material.transparent = true
                 material.alphaTest = 0
                 material.opacity = 0.66
-                
+
                 const instancedMesh = new THREE.InstancedMesh(child.geometry, material, maxInstances)
                 instancedMesh.castShadow = false
                 instancedMesh.receiveShadow = true
@@ -232,7 +232,7 @@ export default class BinManager {
         for (const plan of binPlans) {
             const palColor = palette[plan.colorIndex]
             if (!palColor) continue
-            
+
             const color = new THREE.Color()
             if (palColor.r !== undefined) {
                 color.setRGB(palColor.r, palColor.g, palColor.b)
@@ -270,18 +270,18 @@ export default class BinManager {
                 rIndex: rIndex,
                 queueIndex: queueIndex
             })
-            
+
             index++
         }
 
         const actualCount = index;
         for (const mesh of this.binInstancedMeshes) {
             mesh.count = actualCount;
-            if(actualCount > 0) mesh.instanceColor.needsUpdate = true;
+            if (actualCount > 0) mesh.instanceColor.needsUpdate = true;
         }
         if (this.internalCubeInstancedMesh) {
             this.internalCubeInstancedMesh.count = actualCount * this.internalCubeTransforms.length;
-            if(actualCount > 0) this.internalCubeInstancedMesh.instanceColor.needsUpdate = true;
+            if (actualCount > 0) this.internalCubeInstancedMesh.instanceColor.needsUpdate = true;
         }
         for (const mesh of this.shadowInstancedMeshes) {
             mesh.count = actualCount;
@@ -350,10 +350,10 @@ export default class BinManager {
             )
             // The canvas is 256x128 (2:1 aspect ratio), so we multiply X by 2
             item.colorBin.labelMesh.scale.set(this.debugSettings.labelScale * 2, this.debugSettings.labelScale, 1)
-            
+
             // Only render 2 rows at a time (queueIndex 0 and 1)
             item.colorBin.setVisible(item.queueIndex >= 0 && item.queueIndex < 2)
-            
+
             item.colorBin.updateMatrices()
 
             const i = item.colorBin.instanceIndex;
@@ -368,10 +368,10 @@ export default class BinManager {
             if (this.internalCubeInstancedMesh) {
                 const numCubes = this.internalCubeTransforms.length
                 const visibleCount = Math.min(item.colorBin.currentCount, numCubes)
-                
+
                 for (let j = 0; j < numCubes; j++) {
                     const instanceId = item.colorBin.instanceIndex * numCubes + j
-                    
+
                     if (item.queueIndex >= 0 && item.queueIndex < 2 && j < visibleCount) {
                         const localMat = this.internalCubeTransforms[j]
                         const finalMat = new THREE.Matrix4().multiplyMatrices(item.colorBin.matrix, localMat)
@@ -397,10 +397,9 @@ export default class BinManager {
         const validItems = []
 
         for (const item of this.spawnedBins) {
-            if (item.queueIndex === 0 && 
-                item.colorBin.color.getHex() === colorHex && 
-                item.colorBin.currentCount < item.colorBin.capacity) 
-            {
+            if (item.queueIndex === 0 &&
+                item.colorBin.color.getHex() === colorHex &&
+                item.colorBin.currentCount < item.colorBin.capacity) {
                 validItems.push(item)
             }
         }
@@ -422,7 +421,7 @@ export default class BinManager {
         if (!this.debug.active) return
 
         this.debugFolder = this.debug.ui.addFolder('Bins')
-        
+
         const groupFolder = this.debugFolder.addFolder('Group Transform')
         groupFolder.add(this.debugSettings, 'scale').min(0.1).max(10).step(0.01).name('Scale').onChange((val) => {
             this.binsGroup.scale.set(val, val, val)
@@ -481,12 +480,12 @@ export default class BinManager {
         customFolder.add(this.debugSettings, 'customLabelOffsetX_3').min(-1).max(1).step(0.001).name('Column 3 X').onChange(() => this.updateLayout())
         customFolder.add(this.debugSettings, 'customLabelOffsetX_4').min(-1).max(1).step(0.001).name('Column 4 X').onChange(() => this.updateLayout())
         customFolder.add(this.debugSettings, 'customLabelOffsetX_5').min(-1).max(1).step(0.001).name('Column 5 X').onChange(() => this.updateLayout())
-        
+
         customFolder.add(this.debugSettings, 'customLabelOffsetY_Row0').min(-1).max(1).step(0.001).name('Row 0 Y').onChange(() => this.updateLayout())
         customFolder.add(this.debugSettings, 'customLabelOffsetY_Row1').min(-1).max(1).step(0.001).name('Row 1 Y').onChange(() => this.updateLayout())
     }
 
-    update(dt = 1/60) {
+    update(dt = 1 / 60) {
         if (!this.spawnedBins || !this.experience.camera || !this.experience.camera.instance) return;
 
         const camera = this.experience.camera.instance;
@@ -516,14 +515,14 @@ export default class BinManager {
 
             const upDuration = 0.35; // Adjusted upward speed
             const sidewaysDuration = 0.7; // Adjusted sideways speed
-            const upOffset = 1.0; 
+            const upOffset = 1.0;
             const sidewaysOffset = 6.0; // Push further off screen before cleanup
 
             if (item.exitPhase === 0) {
                 const t = Math.min(item.exitTimer / upDuration, 1.0);
                 const easeT = 1 - (1 - t) * (1 - t);
                 item.colorBin.position.y = item.startY + easeT * upOffset;
-                
+
                 item.colorBin.shadowScale.set(1 - easeT, 1 - easeT, 1 - easeT);
 
                 if (t >= 1.0) {
@@ -540,12 +539,12 @@ export default class BinManager {
                 if (t >= 1.0) {
                     item.exitPhase = 2;
                     item.colorBin.setVisible(false);
-                    
+
                     // Force the instanced matrices to 0 scale before we forget about this bin
                     item.colorBin.updateMatrices();
                     this.binInstancedMeshes.forEach(m => m.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.matrix));
                     this.shadowInstancedMeshes.forEach(m => m.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.shadowMatrix));
-                    
+
                     if (this.internalCubeInstancedMesh) {
                         const numCubes = this.internalCubeTransforms.length;
                         const tempMatrix = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -566,7 +565,7 @@ export default class BinManager {
                 item.colorBin.updateMatrices();
                 this.binInstancedMeshes.forEach(m => m.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.matrix));
                 this.shadowInstancedMeshes.forEach(m => m.setMatrixAt(item.colorBin.instanceIndex, item.colorBin.shadowMatrix));
-                
+
                 if (this.internalCubeInstancedMesh) {
                     const numCubes = this.internalCubeTransforms.length;
                     const visibleCount = Math.min(item.colorBin.currentCount, numCubes);
