@@ -80,9 +80,9 @@ export default class VoxelLevel {
             const rot = dashboard.modelRotationEuler
             this.modelGroup.rotation.set(
                 THREE.MathUtils.degToRad(-rot.x),
-                THREE.MathUtils.degToRad(rot.y),
-                THREE.MathUtils.degToRad(-rot.z),
-                'XYZ'
+                THREE.MathUtils.degToRad(-rot.y),
+                THREE.MathUtils.degToRad(rot.z),
+                'YXZ'
             )
         } else {
             this.modelGroup.rotation.set(0, 0, 0)
@@ -171,7 +171,7 @@ export default class VoxelLevel {
             dummy.position.set(
                 (x - centerX) * this.cubeSize,
                 (y - centerY) * this.cubeSize,
-                (z - centerZ) * this.cubeSize
+                (centerZ - z) * this.cubeSize
             )
             // Reverted to 1, as the scale is handled by the container
             dummy.scale.set(1, 1, 1)
