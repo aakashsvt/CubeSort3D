@@ -91,8 +91,12 @@ export default class VoxelControls {
             return
         }
 
-        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1
-        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+        const rect = this.experience.canvas.getBoundingClientRect()
+        const x = event.clientX - rect.left
+        const y = event.clientY - rect.top
+        
+        this.mouse.x = (x / rect.width) * 2 - 1
+        this.mouse.y = -(y / rect.height) * 2 + 1
 
         this.raycaster.setFromCamera(this.mouse, this.experience.camera.instance)
         const intersects = this.raycaster.intersectObject(this.voxelLevel.instancedMesh)
