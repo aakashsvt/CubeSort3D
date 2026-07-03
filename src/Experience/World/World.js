@@ -6,6 +6,7 @@ import BinManager from './BinManager.js'
 import Environment from './Environment.js'
 import PhysicsWorld from './PhysicsWorld.js'
 import CubeManager from './CubeManager.js'
+import TrayController from './TrayController.js'
 
 
 export default class World
@@ -24,6 +25,7 @@ export default class World
             this.roulette = new Roulette(this.physicsWorld)
             
             this.cubeManager = new CubeManager(this.scene, this.physicsWorld, this.binManager, this.roulette.group)
+            this.trayController = new TrayController(this.binManager)
             
             this.voxelLevel = new VoxelLevel()
             this.voxelControls = new VoxelControls(this.voxelLevel.spinGroup, this.voxelLevel, this.physicsWorld, this.cubeManager)
@@ -37,6 +39,7 @@ export default class World
         if(this.physicsWorld) this.physicsWorld.update()
         if(this.binManager) this.binManager.update(dt)
         if(this.cubeManager) this.cubeManager.update(dt)
+        if(this.trayController) this.trayController.update(dt, this.cubeManager)
         if(this.voxelLevel) this.voxelLevel.update?.()
         if(this.voxelControls) this.voxelControls.update()
         if(this.roulette) this.roulette.update()
