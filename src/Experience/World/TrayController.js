@@ -10,19 +10,34 @@ export default class TrayController {
         const dashboard = levelData.dashboard || {};
         this.maxTrayCapacity = dashboard.trayCapacityCubes || 50;
 
-        this.trayUiContainer = document.createElement('div');
-        this.trayUiContainer.style.position = 'absolute';
-        this.trayUiContainer.style.top = '10px';
-        this.trayUiContainer.style.left = '10px';
-        this.trayUiContainer.style.color = 'white';
-        this.trayUiContainer.style.backgroundColor = 'rgba(0,0,0,0.6)';
-        this.trayUiContainer.style.padding = '10px';
-        this.trayUiContainer.style.fontFamily = 'monospace';
-        this.trayUiContainer.style.fontSize = '16px';
-        this.trayUiContainer.style.zIndex = '99999';
-        this.trayUiContainer.style.pointerEvents = 'none';
-        this.trayUiContainer.innerHTML = `Roulette Capacity: 0 / ${this.maxTrayCapacity}`;
-        document.body.appendChild(this.trayUiContainer);
+        this.wrapper = document.createElement('div');
+        this.wrapper.className = 'tray-counter-wrapper';
+        
+        this.circle = document.createElement('div');
+        this.circle.className = 'tray-counter-circle';
+        
+        this.currentCountEl = document.createElement('div');
+        this.currentCountEl.className = 'tray-counter-current';
+        this.currentCountEl.innerText = '0';
+        
+        const divider = document.createElement('div');
+        divider.className = 'tray-counter-divider';
+        
+        this.maxCountEl = document.createElement('div');
+        this.maxCountEl.className = 'tray-counter-max';
+        this.maxCountEl.innerText = this.maxTrayCapacity.toString();
+        
+        this.circle.appendChild(this.currentCountEl);
+        this.circle.appendChild(divider);
+        this.circle.appendChild(this.maxCountEl);
+        
+        this.warningEl = document.createElement('div');
+        this.warningEl.className = 'tray-counter-warning';
+        
+        this.wrapper.appendChild(this.circle);
+        this.wrapper.appendChild(this.warningEl);
+        
+        document.body.appendChild(this.wrapper);
     }
 
     update(dt, cubeManager) {
@@ -33,7 +48,10 @@ export default class TrayController {
         if (!this.levelEnded) {
             const isOverCapacity = currentCount > this.maxTrayCapacity;
             
+            this.currentCountEl.innerText = currentCount.toString();
+            
             if (isOverCapacity) {
+                this.circle.classList.add('over-capacity');
                 let activeFalling = cubeManager.hasActiveFallingCubes();
 
                 if (!this.overCapacityWarningStarted && activeFalling) {
@@ -49,25 +67,17 @@ export default class TrayController {
                     if (this.failTimer >= this.overCapacityFailDelay) {
                         this.levelEnded = true;
                         console.log("[TrayController] Tray capacity exceeded. Level Failed.");
-                        if (this.trayUiContainer) {
-                            this.trayUiContainer.style.color = 'red';
-                            this.trayUiContainer.innerHTML = `Roulette Capacity: ${currentCount} / ${this.maxTrayCapacity}<br><b>[OVER CAPACITY! LEVEL FAILED]</b>`;
-                        }
+                        this.warningEl.innerHTML = `OVER CAPACITY!<br>LEVEL FAILED`;
                     } else {
-                        if (this.trayUiContainer) {
-                            this.trayUiContainer.style.color = 'red';
-                            this.trayUiContainer.innerHTML = `Roulette Capacity: ${currentCount} / ${this.maxTrayCapacity}<br><b>[WARNING: OVER CAPACITY!]</b>`;
-                        }
+                        this.warningEl.innerHTML = `WARNING:<br>OVER CAPACITY!`;
                     }
                 }
             } else {
+                this.circle.classList.remove('over-capacity');
+                this.warningEl.innerHTML = '';
                 this.overCapacityWarningStarted = false;
                 this.isTimerActive = false;
                 this.failTimer = 0;
-                if (this.trayUiContainer) {
-                    this.trayUiContainer.style.color = 'white';
-                    this.trayUiContainer.innerHTML = `Roulette Capacity: ${currentCount} / ${this.maxTrayCapacity}`;
-                }
             }
         }
     }
