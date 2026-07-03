@@ -70,10 +70,7 @@ export default class CubeManager {
 
         const item = this.binManager.getBinItemForColorHex(colorHex)
         if (item) {
-            item.colorBin.currentCount++
-            item.colorBin.updateLabelText()
-            this.binManager.updateLayout()
-            // console.log('Internal cubes count:', this.binManager.internalCubeInstancedMesh?.count, 'Visible:', Math.min(item.colorBin.currentCount, this.binManager.internalCubeTransforms?.length || 0))
+            item.colorBin.assignedCount++
 
             this.binManager.binsGroup.updateMatrixWorld(true)
             const binPos = new THREE.Vector3()
@@ -81,11 +78,10 @@ export default class CubeManager {
             binPos.applyMatrix4(this.binManager.binsGroup.matrixWorld)
             binPos.y += 0.5
 
-            if (item.colorBin.currentCount >= item.colorBin.capacity) {
-                this.binManager.advanceQueue(item.rIndex)
+            return {
+                binPos: binPos,
+                binItem: item
             }
-
-            return binPos
         }
         return null
     }
@@ -143,6 +139,17 @@ export default class CubeManager {
             if (item.isRouting) {
                 const isDone = this.routingStrategy.update(item, dt, this.dummy, this.dynamicInstancedMesh)
                 if (isDone) {
+                    if (item.targetBinItem) {
+                        const binItem = item.targetBinItem
+                        binItem.colorBin.currentCount++
+                        binItem.colorBin.updateLabelText()
+                        this.binManager.updateLayout()
+
+                        if (binItem.colorBin.currentCount >= binItem.colorBin.capacity) {
+                            this.binManager.advanceQueue(binItem.rIndex)
+                        }
+                    }
+
                     this.availableInstanceIds.push(item.instanceId)
                     this.dynamicCubes.splice(i, 1)
                 }
@@ -169,8 +176,8 @@ export default class CubeManager {
                 if (item.timeOnRoulette > 0.8) {
                     const timer = this.colorRouteTimers[item.colorHex] || 0
                     if (timer <= 0) {
-                        const binPos = this.getAvailableBinPositionForColor(item.colorHex)
-                        if (binPos) {
+                        const binRouteData = this.getAvailableBinPositionForColor(item.colorHex)
+                        if (binRouteData) {
                             this.colorRouteBatchCounters[item.colorHex] = (this.colorRouteBatchCounters[item.colorHex] || 0) + 1
                             
                             if (this.colorRouteBatchCounters[item.colorHex] >= this.routeBatchSize) {
@@ -179,7 +186,8 @@ export default class CubeManager {
                             
                             this.physicsWorld.world.removeRigidBody(item.body)
                             item.body = null
-                            this.routingStrategy.startRouting(item, new THREE.Vector3(translation.x, translation.y, translation.z), binPos)
+                            item.targetBinItem = binRouteData.binItem
+                            this.routingStrategy.startRouting(item, new THREE.Vector3(translation.x, translation.y, translation.z), binRouteData.binPos)
                             continue
                         }
                     }

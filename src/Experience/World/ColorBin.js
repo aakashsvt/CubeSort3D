@@ -9,6 +9,7 @@ export default class ColorBin {
         this.capacity = capacity
         this.color = color
         this.currentCount = 0
+        this.assignedCount = 0
         
         this.position = new THREE.Vector3()
         this.targetPosition = new THREE.Vector3()

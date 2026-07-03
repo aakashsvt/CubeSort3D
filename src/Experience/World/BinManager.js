@@ -391,7 +391,7 @@ export default class BinManager {
         for (const item of this.spawnedBins) {
             if (item.queueIndex === 0 &&
                 item.colorBin.color.getHex() === colorHex &&
-                item.colorBin.currentCount < item.colorBin.capacity) {
+                item.colorBin.assignedCount < item.colorBin.capacity) {
                 validItems.push(item)
             }
         }
