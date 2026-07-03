@@ -85,6 +85,12 @@ export default class VoxelControls {
         if (!this.voxelLevel.instancedMesh) return
         if (this.physicsWorld && (!this.physicsWorld.world || !this.physicsWorld.rouletteBody)) return
 
+        // Prevent continuous taps while cubes are spawning or falling
+        if (this.spawnQueue.length > 0 || (this.cubeManager && this.cubeManager.hasActiveFallingCubes())) {
+            this.showSettleWarning()
+            return
+        }
+
         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1
         this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
 
@@ -158,6 +164,37 @@ export default class VoxelControls {
             }
         }
 
+    }
+    
+    showSettleWarning() {
+        if (!this.warningPopup) {
+            this.warningPopup = document.createElement('div')
+            this.warningPopup.style.position = 'absolute'
+            this.warningPopup.style.top = '50%'
+            this.warningPopup.style.left = '50%'
+            this.warningPopup.style.transform = 'translate(-50%, -50%)'
+            this.warningPopup.style.backgroundColor = 'rgba(0, 0, 0, 0.8)'
+            this.warningPopup.style.color = '#ff4444'
+            this.warningPopup.style.padding = '15px 30px'
+            this.warningPopup.style.borderRadius = '10px'
+            this.warningPopup.style.fontFamily = 'system-ui, sans-serif'
+            this.warningPopup.style.fontWeight = 'bold'
+            this.warningPopup.style.fontSize = '18px'
+            this.warningPopup.style.zIndex = '999999'
+            this.warningPopup.style.pointerEvents = 'none'
+            this.warningPopup.style.opacity = '0'
+            this.warningPopup.style.transition = 'opacity 0.2s ease-in-out'
+            this.warningPopup.style.boxShadow = '0 4px 10px rgba(0,0,0,0.5)'
+            this.warningPopup.innerText = 'Click Restricted! Wait for the cubes to fall'
+            document.body.appendChild(this.warningPopup)
+        }
+
+        this.warningPopup.style.opacity = '1'
+        
+        if (this.warningTimeout) clearTimeout(this.warningTimeout)
+        this.warningTimeout = setTimeout(() => {
+            this.warningPopup.style.opacity = '0'
+        }, 1500)
     }
     
     update() {
