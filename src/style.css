@@ -103,4 +103,30 @@ body {
 .tray-counter-circle.over-capacity::before {
     background: #7a1111;
 }
+
+.settle-warning-popup {
+    position: absolute;
+    top: clamp(70px, 16%, 130px);
+    left: 50%;
+    transform: translate(-50%, -15px);
+    background-color: #000000;
+    color: #ffffff;
+    padding: clamp(8px, 1.5vmin, 12px) clamp(16px, 4vmin, 32px);
+    border-radius: 999px;
+    font-family: 'Arial Black', Impact, system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(12px, 3.5vmin, 20px);
+    z-index: 999999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    white-space: nowrap;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    letter-spacing: 0.5px;
+}
+
+.settle-warning-popup.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
 
