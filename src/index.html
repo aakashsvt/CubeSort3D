@@ -7,6 +7,13 @@
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+    <script>
+        // Use userAgent to strictly separate mobile/tablets from PCs, allowing touch-screen PCs to be treated as PC
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (!isMobile) {
+            document.body.classList.add('is-pc');
+        }
+    </script>
     <canvas class="webgl"></canvas>
     <script type="module" src="./script.js"></script>
 </body>

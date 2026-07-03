@@ -17,12 +17,39 @@ body {
             #CCA3D4 100%);
 }
 
+body.is-pc {
+    width: 100%; /* Override 100dvw */
+    max-width: calc(100dvh * 0.45); /* Slimmer portrait aspect ratio */
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    background: radial-gradient(ellipse at center, #E8D7EC 0%, #CCA3D4 100%);
+    overflow: hidden;
+}
+
+body.is-pc::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100dvw;
+    height: 100dvh;
+    background: #111;
+    z-index: -1;
+}
+
 .webgl {
     position: fixed;
     top: 0;
     left: 0;
+    width: 100%;
+    height: 100%;
     outline: none;
     touch-action: none;
+}
+
+body.is-pc .webgl {
+    position: absolute;
 }
 
 .tray-counter-wrapper {
@@ -134,13 +161,17 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100dvw;
-    height: 100dvh;
+    width: 100%;
+    height: 100%;
     background: rgba(0,0,0,0.65);
     z-index: 9999999;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
     pointer-events: auto;
+}
+
+body.is-pc .level-fail-overlay {
+    position: absolute;
 }
 
 .level-fail-overlay.visible {
@@ -188,5 +219,30 @@ body {
 .level-fail-retry-btn:active {
     transform: translate(-50%, calc(-50% + clamp(4px, 1.2vmin, 8px)));
     box-shadow: 0 0px 0 #cc2233, 0 5px 10px rgba(0,0,0,0.4);
+}
+
+/* PC-specific UI downsizing */
+body.is-pc .tray-counter-circle {
+    width: clamp(60px, 12vmin, 85px);
+    height: clamp(60px, 12vmin, 85px);
+}
+body.is-pc .tray-counter-current, body.is-pc .tray-counter-max {
+    font-size: clamp(12px, 2.5vmin, 18px);
+}
+body.is-pc .tray-counter-warning {
+    font-size: clamp(11px, 2.5vmin, 16px);
+}
+body.is-pc .settle-warning-popup {
+    font-size: clamp(10px, 2.5vmin, 14px);
+    padding: clamp(6px, 1vmin, 8px) clamp(12px, 3vmin, 20px);
+}
+body.is-pc .level-fail-banner {
+    font-size: clamp(24px, 6vmin, 35px);
+    padding: clamp(10px, 2.5vmin, 18px) 0;
+}
+body.is-pc .level-fail-retry-btn {
+    font-size: clamp(18px, 5vmin, 26px);
+    padding: clamp(10px, 3vmin, 15px) clamp(35px, 8vmin, 60px);
+    border-radius: clamp(15px, 4vmin, 25px);
 }
 
