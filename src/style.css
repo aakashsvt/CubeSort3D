@@ -39,11 +39,11 @@ body {
 }
 
 .tray-counter-circle {
+    position: relative;
     width: clamp(75px, 18vmin, 110px);
     height: clamp(75px, 18vmin, 110px);
     border-radius: 50%;
-    background: #0f2c4a;
-    border: clamp(8px, 2.5vmin, 14px) solid #071728;
+    background: conic-gradient(from 180deg, var(--fill-color, #3498db) var(--progress, 0%), #071728 0);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -52,13 +52,23 @@ body {
     font-family: 'Arial Black', Impact, system-ui, sans-serif;
     font-weight: 900;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
+}
+
+.tray-counter-circle::before {
+    content: '';
+    position: absolute;
+    inset: clamp(8px, 2.5vmin, 14px);
+    border-radius: 50%;
+    background: #0f2c4a;
+    z-index: 1;
 }
 
 .tray-counter-current {
     font-size: clamp(15px, 3.8vmin, 24px);
     line-height: 1;
     margin-bottom: 2px;
+    position: relative;
+    z-index: 2;
 }
 
 .tray-counter-divider {
@@ -66,12 +76,16 @@ body {
     height: clamp(2px, 0.5vmin, 4px);
     background-color: white;
     margin: 2px 0;
+    position: relative;
+    z-index: 2;
 }
 
 .tray-counter-max {
     font-size: clamp(15px, 3.8vmin, 24px);
     line-height: 1;
     margin-top: 2px;
+    position: relative;
+    z-index: 2;
 }
 
 .tray-counter-warning {
@@ -84,21 +98,9 @@ body {
 }
 
 .tray-counter-circle.over-capacity {
+    --fill-color: #ff3333;
+}
+.tray-counter-circle.over-capacity::before {
     background: #7a1111;
-    border-color: #3b0505;
-    animation: shake 0.5s infinite;
 }
-
-@keyframes shake {
-    0% { transform: translate(1px, 1px) rotate(0deg); }
-    10% { transform: translate(-1px, -2px) rotate(-1deg); }
-    20% { transform: translate(-3px, 0px) rotate(1deg); }
-    30% { transform: translate(3px, 2px) rotate(0deg); }
-    40% { transform: translate(1px, -1px) rotate(1deg); }
-    50% { transform: translate(-1px, 2px) rotate(-1deg); }
-    60% { transform: translate(-3px, 1px) rotate(0deg); }
-    70% { transform: translate(3px, 1px) rotate(-1deg); }
-    80% { transform: translate(-1px, -1px) rotate(1deg); }
-    90% { transform: translate(1px, 2px) rotate(0deg); }
-    100% { transform: translate(1px, -2px) rotate(-1deg); }
-}
+

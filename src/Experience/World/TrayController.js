@@ -50,6 +50,9 @@ export default class TrayController {
             
             this.currentCountEl.innerText = currentCount.toString();
             
+            const progressPct = Math.min(100, (currentCount / this.maxTrayCapacity) * 100);
+            this.circle.style.setProperty('--progress', `${progressPct}%`);
+            
             if (isOverCapacity) {
                 this.circle.classList.add('over-capacity');
                 let activeFalling = cubeManager.hasActiveFallingCubes();
