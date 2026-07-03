@@ -70,7 +70,8 @@ export default class TrayController {
                     if (this.failTimer >= this.overCapacityFailDelay) {
                         this.levelEnded = true;
                         console.log("[TrayController] Tray capacity exceeded. Level Failed.");
-                        this.warningEl.innerHTML = `OVER CAPACITY!<br>LEVEL FAILED`;
+                        this.warningEl.innerHTML = '';
+                        this.showLevelFailedUI();
                     } else {
                         this.warningEl.innerHTML = `WARNING:<br>OVER CAPACITY!`;
                     }
@@ -83,5 +84,31 @@ export default class TrayController {
                 this.failTimer = 0;
             }
         }
+    }
+
+    showLevelFailedUI() {
+        if (this.failOverlay) return;
+
+        this.failOverlay = document.createElement('div');
+        this.failOverlay.className = 'level-fail-overlay';
+        
+        const banner = document.createElement('div');
+        banner.className = 'level-fail-banner';
+        banner.innerText = 'FAILED';
+        
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'level-fail-retry-btn';
+        retryBtn.innerText = 'RETRY';
+        retryBtn.onclick = () => {
+            window.location.reload();
+        };
+        
+        this.failOverlay.appendChild(banner);
+        this.failOverlay.appendChild(retryBtn);
+        document.body.appendChild(this.failOverlay);
+        
+        // Force reflow
+        void this.failOverlay.offsetWidth;
+        this.failOverlay.classList.add('visible');
     }
 }

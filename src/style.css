@@ -129,4 +129,64 @@ body {
     opacity: 1;
     transform: translate(-50%, 0);
 }
+
+.level-fail-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100dvw;
+    height: 100dvh;
+    background: rgba(0,0,0,0.65);
+    z-index: 9999999;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: auto;
+}
+
+.level-fail-overlay.visible {
+    opacity: 1;
+}
+
+.level-fail-banner {
+    position: absolute;
+    top: 14%;
+    left: 0;
+    width: 100%;
+    background-color: #8f0606;
+    color: #ffffff;
+    text-align: center;
+    padding: clamp(15px, 3.5vmin, 25px) 0;
+    font-family: 'Arial Black', Impact, system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(35px, 9vmin, 55px);
+    letter-spacing: 2px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
+}
+
+.level-fail-retry-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #f04d59;
+    color: #ffffff;
+    border: clamp(3px, 1vmin, 5px) solid #ffffff;
+    border-radius: clamp(25px, 6vmin, 40px);
+    padding: clamp(15px, 4vmin, 20px) clamp(50px, 12vmin, 90px);
+    font-family: 'Arial Black', Impact, system-ui, sans-serif;
+    font-weight: 900;
+    font-size: clamp(26px, 7vmin, 40px);
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 clamp(4px, 1.2vmin, 8px) 0 #cc2233, 0 10px 20px rgba(0,0,0,0.4);
+    transition: transform 0.1s, box-shadow 0.1s;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.level-fail-retry-btn:active {
+    transform: translate(-50%, calc(-50% + clamp(4px, 1.2vmin, 8px)));
+    box-shadow: 0 0px 0 #cc2233, 0 5px 10px rgba(0,0,0,0.4);
+}
 
