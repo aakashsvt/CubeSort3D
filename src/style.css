@@ -245,4 +245,170 @@ body.is-pc .level-fail-retry-btn {
     padding: clamp(10px, 3vmin, 15px) clamp(35px, 8vmin, 60px);
     border-radius: clamp(15px, 4vmin, 25px);
 }
+
+/* Game UI Overlay */
+.game-ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Let clicks pass through to canvas */
+    z-index: 10;
+}
+
+.top-bar {
+    width: 100%;
+    margin-top: clamp(20px, 5vmin, 40px);
+    background-color: #6a5a6c;
+    padding: clamp(12px, 3vmin, 20px) 0;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.top-bar h1 {
+    color: white;
+    font-family: 'Arial Black', Impact, system-ui, sans-serif;
+    font-size: clamp(24px, 6vmin, 40px);
+    margin: 0;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.home-btn {
+    position: absolute;
+    top: clamp(120px, 22vmin, 160px);
+    left: clamp(15px, 4vmin, 25px);
+    width: clamp(45px, 10vmin, 65px);
+    height: clamp(45px, 10vmin, 65px);
+    border-radius: 50%;
+    background-color: #e6e6e6;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    color: #222;
+}
+
+.home-btn svg {
+    width: 55%;
+    height: 55%;
+}
+
+.side-buttons {
+    position: absolute;
+    top: clamp(120px, 20vmin, 160px);
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+}
+
+.nav-btn {
+    padding: clamp(12px, 2.5vmin, 18px) clamp(15px, 4vmin, 25px);
+    border: none;
+    font-family: 'Arial Black', Impact, system-ui, sans-serif;
+    font-size: clamp(16px, 4vmin, 22px);
+    cursor: pointer;
+    text-align: center;
+    font-weight: bold;
+}
+
+.prev-btn {
+    background-color: #ffff00;
+    color: black;
+}
+
+.next-btn {
+    background-color: #00ff55;
+    color: black;
+}
+
+.slider-container {
+    position: absolute;
+    top: 50%;
+    left: clamp(20px, 5vmin, 30px);
+    transform: translateY(-50%);
+    pointer-events: auto;
+}
+
+.slider-track {
+    width: clamp(20px, 5vmin, 30px);
+    height: clamp(180px, 35vmin, 250px);
+    border-radius: clamp(10px, 2.5vmin, 15px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    border: 2px solid white;
+}
+
+.slider-top {
+    flex: 1;
+    background-color: black;
+    color: white;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 10px;
+}
+
+.slider-bottom {
+    flex: 1;
+    background-color: #79d8f9;
+    color: white;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 10px;
+}
+
+.slider-icon {
+    font-family: Arial, sans-serif;
+    font-size: clamp(18px, 4vmin, 24px);
+    font-weight: bold;
+    line-height: 1;
+}
+
+.slider-thumb {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: clamp(32px, 8vmin, 44px);
+    height: clamp(32px, 8vmin, 44px);
+    background-color: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+}
+
+/* PC-specific sizing for game ui */
+body.is-pc .top-bar {
+    padding: clamp(8px, 2vmin, 12px) 0;
+}
+body.is-pc .top-bar h1 {
+    font-size: clamp(20px, 4.5vmin, 28px);
+}
+body.is-pc .home-btn {
+    width: clamp(40px, 7vmin, 55px);
+    height: clamp(40px, 7vmin, 55px);
+    top: clamp(100px, 15vmin, 120px);
+}
+body.is-pc .nav-btn {
+    font-size: clamp(14px, 3vmin, 18px);
+    padding: clamp(10px, 2.5vmin, 15px) clamp(12px, 3vmin, 20px);
+}
+body.is-pc .slider-track {
+    width: clamp(16px, 3.5vmin, 24px);
+    height: clamp(140px, 25vmin, 200px);
+}
+body.is-pc .slider-thumb {
+    width: clamp(26px, 5.5vmin, 36px);
+    height: clamp(26px, 5.5vmin, 36px);
+}
 

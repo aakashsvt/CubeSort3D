@@ -14,6 +14,29 @@
             document.body.classList.add('is-pc');
         }
     </script>
+    <div class="game-ui">
+        <div class="top-bar">
+            <h1>LEVEL 1</h1>
+        </div>
+        
+        <button class="home-btn" aria-label="Home">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                <path d="M12 3L4 9v12h5v-7h6v7h5V9z"/>
+            </svg>
+        </button>
+        
+        <div class="slider-container">
+            <div class="slider-track">
+                <div class="slider-top">
+                    <span class="slider-icon">+</span>
+                </div>
+                <div class="slider-bottom">
+                    <span class="slider-icon">-</span>
+                </div>
+                <div class="slider-thumb"></div>
+            </div>
+        </div>
+    </div>
     <canvas class="webgl"></canvas>
     <script type="module" src="./script.js"></script>
 </body>
