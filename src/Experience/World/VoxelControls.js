@@ -1,6 +1,7 @@
 import Experience from '../Experience.js'
 import * as THREE from 'three'
 import FloodFillSelector from './FloodFillSelector.js'
+import WarningUI from '../../UI/WarningUI.js'
 
 export default class VoxelControls {
     constructor(targetGroup, voxelLevel, physicsWorld, cubeManager) {
@@ -16,6 +17,8 @@ export default class VoxelControls {
         this.mouse = new THREE.Vector2()
         this.isDragging = false
         this.floodFill = new FloodFillSelector(this.voxelLevel.voxelGrid)
+        
+        this.warningUI = new WarningUI()
 
         this.touch = {
             active: false,
@@ -171,41 +174,7 @@ export default class VoxelControls {
     }
     
     showSettleWarning() {
-        if (!this.warningPopup) {
-            this.warningPopup = document.createElement('div')
-            this.warningPopup.innerText = 'WAIT FOR CUBES TO SETTLE'
-            this.warningPopup.style.position = 'absolute'
-            this.warningPopup.style.top = '15%'
-            this.warningPopup.style.left = '50%'
-            this.warningPopup.style.transform = 'translate(-50%, -15px)'
-            this.warningPopup.style.backgroundColor = '#000000'
-            this.warningPopup.style.color = '#ffffff'
-            this.warningPopup.style.padding = '10px 24px'
-            this.warningPopup.style.borderRadius = '999px'
-            this.warningPopup.style.fontFamily = '"Arial Black", Impact, system-ui, sans-serif'
-            this.warningPopup.style.fontWeight = '900'
-            this.warningPopup.style.fontSize = '16px'
-            this.warningPopup.style.zIndex = '999999'
-            this.warningPopup.style.pointerEvents = 'none'
-            this.warningPopup.style.opacity = '0'
-            this.warningPopup.style.transition = 'opacity 0.2s ease-out, transform 0.2s ease-out'
-            this.warningPopup.style.whiteSpace = 'nowrap'
-            this.warningPopup.style.boxShadow = '0 6px 16px rgba(0,0,0,0.3)'
-            this.warningPopup.style.letterSpacing = '0.5px'
-            document.body.appendChild(this.warningPopup)
-        }
-
-        // Force reflow so transition works
-        void this.warningPopup.offsetWidth;
-
-        this.warningPopup.style.opacity = '1'
-        this.warningPopup.style.transform = 'translate(-50%, 0)'
-        
-        if (this.warningTimeout) clearTimeout(this.warningTimeout)
-        this.warningTimeout = setTimeout(() => {
-            this.warningPopup.style.opacity = '0'
-            this.warningPopup.style.transform = 'translate(-50%, -15px)'
-        }, 1500)
+        this.warningUI.show()
     }
     
     update() {
