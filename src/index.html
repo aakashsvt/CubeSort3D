@@ -8,11 +8,23 @@
 </head>
 <body>
     <script>
-        // Use userAgent to strictly separate mobile/tablets from PCs, allowing touch-screen PCs to be treated as PC
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        if (!isMobile) {
-            document.body.classList.add('is-pc');
-        }
+        const checkIsPC = () => {
+            const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            // Alternatively, use window width to toggle PC mode for better responsive testing
+            const isWideScreen = window.innerWidth > 768 && window.innerWidth > window.innerHeight;
+            
+            if (!isMobileUA && isWideScreen) {
+                document.body.classList.add('is-pc');
+            } else {
+                document.body.classList.remove('is-pc');
+            }
+            
+            // Trigger a resize event to ensure ThreeJS updates its canvas size properly after layout change
+            setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+        };
+        
+        checkIsPC();
+        window.addEventListener('resize', checkIsPC);
     </script>
     <div class="game-ui">
         <div class="top-bar">

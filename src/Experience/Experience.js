@@ -27,8 +27,8 @@ export default class Experience
         // Global access
         window.experience = this
 
-        // Options
-        this.canvas = _canvas
+        // Options (Safeguard for HMR where a child might initialize the singleton first)
+        this.canvas = _canvas || document.querySelector('canvas.webgl')
 
         // Setup
         this.debug = new Debug()
