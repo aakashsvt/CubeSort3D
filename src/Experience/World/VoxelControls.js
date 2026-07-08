@@ -28,7 +28,7 @@ export default class VoxelControls {
             dampingFactor: 0.1
         }
         
-        this.staggerDelay = 10
+        this.staggerDelay = 20
         this.spawnQueue = []
         this.spawnTimer = 0
 
@@ -54,12 +54,14 @@ export default class VoxelControls {
 
         // Pointer Events (works for both mouse and touch)
         canvas.addEventListener('pointerdown', (event) => {
+            if (this.experience.world?.trayController?.levelEnded) return;
             this.touch.active = true
             this.touch.previousX = event.clientX
             this.isDragging = false
         }, { passive: false })
 
         window.addEventListener('pointermove', (event) => {
+            if (this.experience.world?.trayController?.levelEnded) return;
             if (this.touch.active) {
                 const deltaX = event.clientX - this.touch.previousX
                 if (Math.abs(deltaX) > 2) this.isDragging = true
@@ -75,6 +77,10 @@ export default class VoxelControls {
         }, { passive: false })
 
         window.addEventListener('pointerup', (event) => {
+            if (this.experience.world?.trayController?.levelEnded) {
+                this.touch.active = false;
+                return;
+            }
             this.touch.active = false
             if (!this.isDragging) {
                 this.handleClick(event)
@@ -85,6 +91,7 @@ export default class VoxelControls {
     }
 
     handleClick(event) {
+        if (this.experience.world?.trayController?.levelEnded) return;
         if (!this.voxelLevel.instancedMesh) return
         if (this.physicsWorld && (!this.physicsWorld.world || !this.physicsWorld.rouletteBody)) return
 

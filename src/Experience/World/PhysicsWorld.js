@@ -11,7 +11,7 @@ export default class PhysicsWorld {
         this.world = null
         this.physicsParams = {
             gravity: -60.0,
-            restitution: 0.1,
+            restitution: 0.5,
             friction: 0.6,
             debugRender: false
         }
@@ -20,7 +20,7 @@ export default class PhysicsWorld {
         
         this.setDebug()
         this.ready = this.init()
-    }
+    }   
 
     setDebug() {
         this.debug = this.experience.debug
@@ -54,6 +54,11 @@ export default class PhysicsWorld {
         
         const gravity = { x: 0.0, y: this.physicsParams.gravity, z: 0.0 }
         this.world = new RAPIER.World(gravity)
+        
+        // OPTIMIZATION: Reduce solver iterations to massively improve performance 
+        // with many cubes, trading a tiny bit of stability for huge CPU gains.
+        this.world.integrationParameters.numSolverIterations = 2; // Default is 4
+        this.world.integrationParameters.numAdditionalFrictionIterations = 2; // Default is 4
     }
 
     createRouletteBody(rouletteGroup, rouletteModel, netOffsetY = 0) {
@@ -120,6 +125,7 @@ export default class PhysicsWorld {
                 
                 if (child.name === 'InvisibleWall' || child.name === 'DeflectorCone') {
                     colliderDesc.setFriction(0.0) // Slippery wall/cone
+                    colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min) // Force 0 friction!
                 } else {
                     colliderDesc.setFriction(5.0) // Normal friction
                     colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Max)
@@ -141,7 +147,7 @@ export default class PhysicsWorld {
         rouletteModel.matrixWorld.decompose(new THREE.Vector3(), new THREE.Quaternion(), worldScale)
 
         const scaledRadius = localRadius * Math.max(worldScale.x, worldScale.z)
-        const halfHeight = 0.5 // 1.0 unit thick safety net
+        const halfHeight = 3.0 // 6.0 unit thick safety net (prevents tunneling at high -60 gravity without needing expensive CCD)
         const scaledHalfHeight = halfHeight * worldScale.y
         
         // Position the top of the cylinder at the lowest point of the model + the user offset
@@ -169,7 +175,12 @@ export default class PhysicsWorld {
         if (!this.world) return null
         
         let bodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(worldPos.x, worldPos.y, worldPos.z).setRotation(worldQuat)
-        bodyDesc.setCcdEnabled(true)
+        
+        // OPTIMIZATION: Disable CCD (Continuous Collision Detection). 
+        // It's incredibly expensive and causes massive lag with 100+ cubes. 
+        // Our thick safety-net cylinder underneath catches any tunneling cubes anyway.
+        bodyDesc.setCcdEnabled(false) 
+        
         let body = this.world.createRigidBody(bodyDesc)
         
         let colliderDesc = RAPIER.ColliderDesc.cuboid(colliderSize * 0.48, colliderSize * 0.48, colliderSize * 0.48)

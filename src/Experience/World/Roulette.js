@@ -15,13 +15,13 @@ export default class Roulette {
             radiusOffset: 0.0,
             height: 2.0,
             posY: 0.9,
-            netOffsetY: 0.0
+            netOffsetY: 0.14 // Lowered slightly based on feedback
         }
 
         this.coneParams = {
-            radius: 0.45,
-            height: 0.5,
-            posY: 0.3
+            radius: 0.5,
+            height: 1.2,
+            posY: 0.4
         }
 
         this.speed = 2

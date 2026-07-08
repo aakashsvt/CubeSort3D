@@ -44,7 +44,7 @@ export default class TrayController {
                         this.ui.setWarningText('');
                         this.ui.showLevelFailedUI();
                     } else {
-                        this.ui.setWarningText(`WARNING:<br>OVER CAPACITY!`);
+                        // this.ui.setWarningText(`WARNING:<br>OVER CAPACITY!`);
                     }
                 }
             } else {
