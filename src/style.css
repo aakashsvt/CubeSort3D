@@ -2,6 +2,9 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 html,
@@ -336,7 +339,7 @@ body.is-pc .level-fail-retry-btn {
 }
 
 .slider-track {
-    width: clamp(20px, 5vmin, 30px);
+    width: clamp(19px, 4.75vmin, 28px);
     height: clamp(180px, 35vmin, 250px);
     border-radius: clamp(10px, 2.5vmin, 15px);
     position: relative;
@@ -386,8 +389,8 @@ body.is-pc .level-fail-retry-btn {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: clamp(32px, 7.6vmin, 43px);
-    height: clamp(32px, 7.6vmin, 43px);
+    width: clamp(30px, 7.2vmin, 41px);
+    height: clamp(30px, 7.2vmin, 41px);
     background-color: white;
     border-radius: 50%;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
@@ -412,11 +415,11 @@ body.is-pc .nav-btn {
     padding: clamp(10px, 2.5vmin, 15px) clamp(12px, 3vmin, 20px);
 }
 body.is-pc .slider-track {
-    width: clamp(16px, 3.5vmin, 24px);
+    width: clamp(15px, 3.3vmin, 23px);
     height: clamp(140px, 25vmin, 200px);
 }
 body.is-pc .slider-thumb {
-    width: clamp(26px, 5.7vmin, 36px);
-    height: clamp(26px, 5.7vmin, 36px);
+    width: clamp(25px, 5.4vmin, 34px);
+    height: clamp(25px, 5.4vmin, 34px);
 }
 
