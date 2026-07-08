@@ -339,16 +339,23 @@ body.is-pc .level-fail-retry-btn {
     width: clamp(20px, 5vmin, 30px);
     height: clamp(180px, 35vmin, 250px);
     border-radius: clamp(10px, 2.5vmin, 15px);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
     position: relative;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     border: 2px solid white;
+    touch-action: none; /* Prevent native scroll on mobile when dragging */
+}
+
+.slider-track-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .slider-top {
-    flex: 1;
+    height: 50%;
     background-color: black;
     color: white;
     display: flex;
@@ -358,7 +365,7 @@ body.is-pc .level-fail-retry-btn {
 }
 
 .slider-bottom {
-    flex: 1;
+    height: 50%;
     background-color: #79d8f9;
     color: white;
     display: flex;
@@ -379,12 +386,13 @@ body.is-pc .level-fail-retry-btn {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: clamp(32px, 8vmin, 44px);
-    height: clamp(32px, 8vmin, 44px);
+    width: clamp(32px, 7.6vmin, 43px);
+    height: clamp(32px, 7.6vmin, 43px);
     background-color: white;
     border-radius: 50%;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
     cursor: pointer;
+    z-index: 2;
 }
 
 /* PC-specific sizing for game ui */
@@ -408,7 +416,7 @@ body.is-pc .slider-track {
     height: clamp(140px, 25vmin, 200px);
 }
 body.is-pc .slider-thumb {
-    width: clamp(26px, 5.5vmin, 36px);
-    height: clamp(26px, 5.5vmin, 36px);
+    width: clamp(26px, 5.7vmin, 36px);
+    height: clamp(26px, 5.7vmin, 36px);
 }
 
