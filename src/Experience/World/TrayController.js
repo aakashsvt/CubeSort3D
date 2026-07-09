@@ -43,8 +43,6 @@ export default class TrayController {
                         console.log("[TrayController] Tray capacity exceeded. Level Failed.");
                         this.ui.setWarningText('');
                         this.ui.showLevelFailedUI();
-                    } else {
-                        // this.ui.setWarningText(`WARNING:<br>OVER CAPACITY!`);
                     }
                 }
             } else {
