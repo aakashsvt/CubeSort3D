@@ -29,7 +29,7 @@ export default class VoxelControls {
         }
         
         this.staggerDelay = 20
-        this.spawnQueue = []
+        this.spawnGroups = []
         this.spawnTimer = 0
 
         this.setDebug()
@@ -95,12 +95,22 @@ export default class VoxelControls {
         if (!this.voxelLevel.instancedMesh) return
         if (this.physicsWorld && (!this.physicsWorld.world || !this.physicsWorld.rouletteBody)) return
 
-        // Prevent continuous taps while cubes are spawning or falling
-        if (this.spawnQueue.length > 0 || (this.cubeManager && this.cubeManager.hasActiveFallingCubes())) {
-            this.showSettleWarning()
-            return
+        // Calculate how many different colors are currently spawning or falling
+        let fallingColors = new Set()
+        for (const group of this.spawnGroups) {
+            for (const item of group) {
+                fallingColors.add(item.color.getHex())
+            }
+        }
+        if (this.cubeManager && this.cubeManager.dynamicCubes) {
+            for (const item of this.cubeManager.dynamicCubes) {
+                if (item.body && item.body.translation().y >= 0.5 && !item.isRouting) {
+                    fallingColors.add(item.colorHex)
+                }
+            }
         }
 
+        // We need the color of the cube we just clicked to see if it's allowed
         const rect = this.experience.canvas.getBoundingClientRect()
         const x = event.clientX - rect.left
         const y = event.clientY - rect.top
@@ -114,6 +124,16 @@ export default class VoxelControls {
         if (intersects.length > 0) {
             const instanceId = intersects[0].instanceId
             
+            const color = new THREE.Color()
+            this.voxelLevel.instancedMesh.getColorAt(instanceId, color)
+            const clickedColorHex = color.getHex()
+
+            // Block if 2 or more DIFFERENT colors are already falling, AND we clicked a new color
+            if (fallingColors.size >= 2 && !fallingColors.has(clickedColorHex)) {
+                this.showSettleWarning()
+                return
+            }
+
             const cube = this.voxelLevel.cubes.find(c => c.instanceId === instanceId)
             if (!cube || !cube.active) return
 
@@ -138,7 +158,7 @@ export default class VoxelControls {
                 return distA - distB
             })
 
-            let delay = 0
+            let groupQueue = []
             for (const c of connected) {
                 c.active = false
                 this.voxelLevel.voxelGrid.remove(c.gridPos.x, c.gridPos.y, c.gridPos.z)
@@ -160,7 +180,7 @@ export default class VoxelControls {
                     const visualScale = scale.x * targetScale
                     const colliderSize = this.voxelLevel.cubeSize * scale.x * targetScale
 
-                    this.spawnQueue.push({
+                    groupQueue.push({
                         instanceId: c.instanceId,
                         position: position,
                         quaternion: quaternion,
@@ -171,6 +191,10 @@ export default class VoxelControls {
                 } else {
                     this.voxelLevel.instancedMesh.setMatrixAt(c.instanceId, dummy.matrix)
                 }
+            }
+
+            if (groupQueue.length > 0) {
+                this.spawnGroups.push(groupQueue)
             }
 
             if (!this.physicsWorld) {
@@ -190,27 +214,37 @@ export default class VoxelControls {
             this.targetGroup.rotation.y += (this.touch.targetRotationY - this.targetGroup.rotation.y) * this.touch.dampingFactor
         }
 
-        if (this.spawnQueue.length > 0 && this.physicsWorld) {
+        if (this.spawnGroups.length > 0 && this.physicsWorld) {
             this.spawnTimer += this.experience.time.delta
 
-            while (this.spawnQueue.length > 0 && this.spawnTimer >= this.staggerDelay) {
+            while (this.spawnGroups.length > 0 && this.spawnTimer >= this.staggerDelay) {
                 if (this.staggerDelay > 0) {
                     this.spawnTimer -= this.staggerDelay
                 } else {
                     this.spawnTimer = 0
                 }
 
-                const item = this.spawnQueue.shift()
+                // Pop one cube from each active spawn group to spawn them in parallel
+                for (let i = this.spawnGroups.length - 1; i >= 0; i--) {
+                    const group = this.spawnGroups[i]
+                    if (group.length > 0) {
+                        const item = group.shift()
 
-                const dummy = new THREE.Object3D()
-                dummy.scale.set(0, 0, 0)
-                dummy.updateMatrix()
-                
-                this.voxelLevel.instancedMesh.setMatrixAt(item.instanceId, dummy.matrix)
-                this.voxelLevel.instancedMesh.instanceMatrix.needsUpdate = true
-                
-                const body = this.physicsWorld.createCubeBody(item.position, item.quaternion, item.colliderSize)
-                this.cubeManager.spawnCube(item.color, item.visualScale, body)
+                        const dummy = new THREE.Object3D()
+                        dummy.scale.set(0, 0, 0)
+                        dummy.updateMatrix()
+                        
+                        this.voxelLevel.instancedMesh.setMatrixAt(item.instanceId, dummy.matrix)
+                        this.voxelLevel.instancedMesh.instanceMatrix.needsUpdate = true
+                        
+                        const body = this.physicsWorld.createCubeBody(item.position, item.quaternion, item.colliderSize)
+                        this.cubeManager.spawnCube(item.color, item.visualScale, body)
+                    }
+
+                    if (group.length === 0) {
+                        this.spawnGroups.splice(i, 1)
+                    }
+                }
             }
         }
     }
