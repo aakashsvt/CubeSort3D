@@ -15,7 +15,7 @@ export default class Roulette {
             radiusOffset: 0.0,
             height: 2.0,
             posY: 0.9,
-            netOffsetY: 0.14 // Lowered slightly based on feedback
+            netOffsetY: 0.12 // Lowered slightly based on feedback
         }
 
         this.coneParams = {
