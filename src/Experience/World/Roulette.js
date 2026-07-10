@@ -20,7 +20,9 @@ export default class Roulette {
         this.coneParams = {
             radius: 0.5,
             height: 1.2,
-            posY: 0.4
+            posX: 0.0,
+            posY: 0.4,
+            posZ: 0.0
         }
 
         this.speed = 2
@@ -85,6 +87,9 @@ export default class Roulette {
         const size = localBox.getSize(new THREE.Vector3())
         this.modelCenter = localBox.getCenter(new THREE.Vector3())
         
+        this.coneParams.posX = this.modelCenter.x
+        this.coneParams.posZ = this.modelCenter.z
+        
         // Explicitly setting radius to 1.15 as requested
         this.wallParams.radius = 1.15
 
@@ -116,7 +121,7 @@ export default class Roulette {
             this.coneMaterial
         )
         this.coneMesh.name = 'DeflectorCone'
-        this.coneMesh.position.set(this.modelCenter.x, this.coneParams.posY, this.modelCenter.z)
+        this.coneMesh.position.set(this.coneParams.posX, this.coneParams.posY, this.coneParams.posZ)
         this.model.add(this.coneMesh)
 
         if (this.physicsWorld) {
@@ -176,13 +181,15 @@ export default class Roulette {
                 if (this.coneMesh) {
                     this.coneMesh.geometry.dispose()
                     this.coneMesh.geometry = new THREE.ConeGeometry(this.coneParams.radius, this.coneParams.height, 32)
-                    this.coneMesh.position.set(this.modelCenter.x, this.coneParams.posY, this.modelCenter.z)
+                    this.coneMesh.position.set(this.coneParams.posX, this.coneParams.posY, this.coneParams.posZ)
                 }
             }
 
             coneFolder.add(this.coneParams, 'radius').min(0.01).max(5).step(0.01).name('Radius').onChange(updateConeVisuals).onFinishChange(updateWallPhysics)
             coneFolder.add(this.coneParams, 'height').min(0.01).max(5).step(0.01).name('Height').onChange(updateConeVisuals).onFinishChange(updateWallPhysics)
-            coneFolder.add(this.coneParams, 'posY').min(-5).max(5).step(0.01).name('Height Offset (Y)').onChange(updateConeVisuals).onFinishChange(updateWallPhysics)
+            coneFolder.add(this.coneParams, 'posX').min(-5).max(5).step(0.01).name('Pos X').onChange(updateConeVisuals).onFinishChange(updateWallPhysics)
+            coneFolder.add(this.coneParams, 'posY').min(-5).max(5).step(0.01).name('Pos Y').onChange(updateConeVisuals).onFinishChange(updateWallPhysics)
+            coneFolder.add(this.coneParams, 'posZ').min(-5).max(5).step(0.01).name('Pos Z').onChange(updateConeVisuals).onFinishChange(updateWallPhysics)
             coneFolder.add(this.coneMaterial, 'opacity').min(0).max(1).step(0.01).name('Debug Opacity')
             
             const shadowFolder = this.debugFolder.addFolder('Shadow')

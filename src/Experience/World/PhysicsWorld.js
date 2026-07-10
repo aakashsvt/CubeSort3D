@@ -16,12 +16,12 @@ export default class PhysicsWorld {
             debugRender: false,
             enableTrimesh: true,
             enableWall: true,
-            enableCone: false,
+            enableCone: true,
             enableSafetyNet: true,
             netRadiusOffset: 0.0,
             netHalfHeight: 3.0,
             netOffsetY: 0.11,
-            ccdEnabled: true,
+            ccdEnabled: false,
             solverIterations: 4
         }
         
@@ -126,10 +126,34 @@ export default class PhysicsWorld {
                     localBox.union(childBox)
                 }
 
-                // Generate trimesh for roulette and wall (skip based on physicsParams)
+                // Generate colliders (skip based on physicsParams)
                 if (child.name === 'InvisibleWall' && !this.physicsParams.enableWall) return
                 if (child.name === 'DeflectorCone' && !this.physicsParams.enableCone) return
                 if (child.name !== 'InvisibleWall' && child.name !== 'DeflectorCone' && !this.physicsParams.enableTrimesh) return
+                
+                const worldScale = new THREE.Vector3()
+                rouletteModel.matrixWorld.decompose(new THREE.Vector3(), new THREE.Quaternion(), worldScale)
+
+                // OPTIMIZATION: Use a solid native primitive for the Deflector Cone instead of a hollow Trimesh shell.
+                // A solid cone has volume, meaning fast-falling cubes will be pushed outward even if they penetrate deeply.
+                // This prevents tunneling without needing expensive CCD!
+                if (child.name === 'DeflectorCone') {
+                    child.geometry.computeBoundingBox()
+                    const size = child.geometry.boundingBox.getSize(new THREE.Vector3())
+                    const radius = Math.max(size.x, size.z) / 2
+                    const halfHeight = size.y / 2
+
+                    let colliderDesc = RAPIER.ColliderDesc.cone(halfHeight * worldScale.y, radius * Math.max(worldScale.x, worldScale.z))
+                    colliderDesc.setTranslation(child.position.x * worldScale.x, child.position.y * worldScale.y, child.position.z * worldScale.z)
+                    colliderDesc.setRestitution(0.1)
+                    colliderDesc.setFriction(0.0) // Slippery cone
+                    colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min)
+                    
+                    this.world.createCollider(colliderDesc, this.rouletteBody)
+                    return // Done with the cone
+                }
+
+                // For the Roulette Tray and Invisible Wall, we must use a Trimesh because they are hollow/concave.
                 const geometry = child.geometry.clone()
                 const matrix = new THREE.Matrix4()
                 matrix.copy(child.matrixWorld)
@@ -137,7 +161,6 @@ export default class PhysicsWorld {
                 const modelInverse = new THREE.Matrix4().copy(rouletteModel.matrixWorld).invert()
                 matrix.premultiply(modelInverse) 
 
-                const worldScale = new THREE.Vector3()
                 rouletteModel.matrixWorld.decompose(new THREE.Vector3(), new THREE.Quaternion(), worldScale)
                 const scaleMatrix = new THREE.Matrix4().makeScale(worldScale.x, worldScale.y, worldScale.z)
                 scaleMatrix.multiply(matrix)
@@ -160,8 +183,8 @@ export default class PhysicsWorld {
                 let colliderDesc = RAPIER.ColliderDesc.trimesh(verticesFloat32, indicesUint32)
                 colliderDesc.setRestitution(0.1)
                 
-                if (child.name === 'InvisibleWall' || child.name === 'DeflectorCone') {
-                    colliderDesc.setFriction(0.0) // Slippery wall/cone
+                if (child.name === 'InvisibleWall') {
+                    colliderDesc.setFriction(0.0) // Slippery wall
                     colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min) // Force 0 friction!
                 } else {
                     colliderDesc.setFriction(0.3) // Low friction — enough to settle on tilt, not enough to fling outward
