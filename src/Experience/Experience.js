@@ -8,6 +8,7 @@ import Renderer from './Renderer.js'
 import World from './World/World.js'
 import Resources from './Utils/Resources.js'
 import ZoomSlider from '../UI/ZoomSlider.js'
+import LoadingScreen from '../UI/LoadingScreen.js'
 
 import sources from './sources.js'
 
@@ -36,6 +37,7 @@ export default class Experience
         this.time = new Time()
         this.scene = new THREE.Scene()
         this.resources = new Resources(sources)
+        this.loadingScreen = new LoadingScreen(this)
         this.camera = new Camera()
         this.renderer = new Renderer()
         this.world = new World()

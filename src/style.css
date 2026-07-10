@@ -422,4 +422,35 @@ body.is-pc .slider-thumb {
     width: clamp(25px, 5.4vmin, 34px);
     height: clamp(25px, 5.4vmin, 34px);
 }
+
+/* Loading Screen */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999999;
+    transition: opacity 0.5s ease;
+}
+
+.loading-bar-container {
+    width: 60%;
+    max-width: 300px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.loading-bar {
+    width: 0%;
+    height: 100%;
+    background: #fff;
+    transition: width 0.1s linear;
+}
 
