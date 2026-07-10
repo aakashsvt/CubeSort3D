@@ -209,7 +209,7 @@ export default class CubeManager {
             this.dummy.matrix.decompose(this.dummy.position, this.dummy.quaternion, this.dummy.scale)
 
             // Check if cube should route to a bin
-            if (item.timeOnRoulette > 0.8) {
+            if (item.timeOnRoulette > 0.1) {
                 const timer = this.colorRouteTimers[item.colorHex] || 0
                 if (timer <= 0) {
                     const binRouteData = this.getAvailableBinPositionForColor(item.colorHex)
