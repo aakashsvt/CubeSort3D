@@ -83,7 +83,7 @@ export default class Roulette {
             }
         })
         const size = localBox.getSize(new THREE.Vector3())
-        const center = localBox.getCenter(new THREE.Vector3())
+        this.modelCenter = localBox.getCenter(new THREE.Vector3())
         
         // Explicitly setting radius to 1.15 as requested
         this.wallParams.radius = 1.15
@@ -101,7 +101,7 @@ export default class Roulette {
             this.wallMaterial
         )
         this.wallMesh.name = 'InvisibleWall'
-        this.wallMesh.position.y = this.wallParams.posY
+        this.wallMesh.position.set(this.modelCenter.x, this.wallParams.posY, this.modelCenter.z)
         this.model.add(this.wallMesh)
 
         this.coneMaterial = new THREE.MeshStandardMaterial({
@@ -116,7 +116,7 @@ export default class Roulette {
             this.coneMaterial
         )
         this.coneMesh.name = 'DeflectorCone'
-        this.coneMesh.position.y = this.coneParams.posY
+        this.coneMesh.position.set(this.modelCenter.x, this.coneParams.posY, this.modelCenter.z)
         this.model.add(this.coneMesh)
 
         if (this.physicsWorld) {
@@ -155,7 +155,7 @@ export default class Roulette {
                 if (this.wallMesh) {
                     this.wallMesh.geometry.dispose()
                     this.wallMesh.geometry = new THREE.CylinderGeometry(this.wallParams.radius, this.wallParams.radius, this.wallParams.height, 32, 1, true)
-                    this.wallMesh.position.y = this.wallParams.posY
+                    this.wallMesh.position.set(this.modelCenter.x, this.wallParams.posY, this.modelCenter.z)
                 }
             }
             
@@ -176,7 +176,7 @@ export default class Roulette {
                 if (this.coneMesh) {
                     this.coneMesh.geometry.dispose()
                     this.coneMesh.geometry = new THREE.ConeGeometry(this.coneParams.radius, this.coneParams.height, 32)
-                    this.coneMesh.position.y = this.coneParams.posY
+                    this.coneMesh.position.set(this.modelCenter.x, this.coneParams.posY, this.modelCenter.z)
                 }
             }
 
