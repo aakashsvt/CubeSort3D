@@ -47,22 +47,35 @@ export default class VoxelControls {
 
     setInteraction() {
         const canvas = this.experience.canvas
+        this.activePointers = new Set()
 
-        const stopInteraction = () => {
-            this.touch.active = false
+        const stopInteraction = (event) => {
+            if (event && event.pointerId !== undefined) {
+                this.activePointers.delete(event.pointerId)
+            }
+            if (this.activePointers.size === 0) {
+                this.touch.active = false
+            }
         }
 
         // Pointer Events (works for both mouse and touch)
         canvas.addEventListener('pointerdown', (event) => {
             if (this.experience.world?.trayController?.levelEnded) return;
-            this.touch.active = true
-            this.touch.previousX = event.clientX
-            this.isDragging = false
+            this.activePointers.add(event.pointerId)
+            
+            if (this.activePointers.size === 1) {
+                this.touch.active = true
+                this.touch.previousX = event.clientX
+                this.touch.pointerId = event.pointerId
+                this.isDragging = false
+            }
         }, { passive: false })
 
         window.addEventListener('pointermove', (event) => {
             if (this.experience.world?.trayController?.levelEnded) return;
-            if (this.touch.active) {
+            
+            // Only rotate if exactly one finger is down, and it's the primary tracking finger
+            if (this.touch.active && this.activePointers.size === 1 && event.pointerId === this.touch.pointerId) {
                 const deltaX = event.clientX - this.touch.previousX
                 if (Math.abs(deltaX) > 2) this.isDragging = true
 
@@ -73,18 +86,25 @@ export default class VoxelControls {
                     const normalizedDelta = deltaX / window.innerWidth
                     this.touch.targetRotationY += normalizedDelta * this.touch.rotationSpeed
                 }
+            } else if (this.activePointers.size > 1) {
+                // If zooming/pinching, mark as dragging so we don't accidentally click when lifting
+                this.isDragging = true
+                if (event.pointerId === this.touch.pointerId) {
+                    this.touch.previousX = event.clientX // Keep synced to avoid jumps
+                }
             }
         }, { passive: false })
 
         window.addEventListener('pointerup', (event) => {
             if (this.experience.world?.trayController?.levelEnded) {
-                this.touch.active = false;
+                stopInteraction(event)
                 return;
             }
-            this.touch.active = false
-            if (!this.isDragging) {
+            
+            if (this.activePointers.size === 1 && event.pointerId === this.touch.pointerId && !this.isDragging) {
                 this.handleClick(event)
             }
+            stopInteraction(event)
         })
         window.addEventListener('pointerleave', stopInteraction)
         window.addEventListener('pointercancel', stopInteraction)

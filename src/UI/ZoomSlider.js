@@ -12,6 +12,9 @@ export default class ZoomSlider {
         this.currentPercent = 50; // Default to middle
         this.minScale = 0.295;
         this.maxScale = 0.375;
+        
+        this.initialPinchDistance = null;
+        this.initialPinchPercent = null;
 
         this.bindEvents();
         this.updateUI();
@@ -29,6 +32,74 @@ export default class ZoomSlider {
             e.preventDefault(); // Prevent double firing with pointerdown
             this.onPointerDown(e);
         }, { passive: false });
+
+        // Bind pinch/wheel events
+        this.onCanvasTouchStart = this.onCanvasTouchStart.bind(this);
+        this.onCanvasTouchMove = this.onCanvasTouchMove.bind(this);
+        this.onCanvasTouchEnd = this.onCanvasTouchEnd.bind(this);
+        this.onCanvasWheel = this.onCanvasWheel.bind(this);
+
+        const canvas = this.experience.canvas;
+        if (canvas) {
+            canvas.addEventListener('touchstart', this.onCanvasTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', this.onCanvasTouchMove, { passive: false });
+            canvas.addEventListener('touchend', this.onCanvasTouchEnd);
+            canvas.addEventListener('wheel', this.onCanvasWheel, { passive: false });
+        }
+    }
+
+    getPinchDistance(touches) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    onCanvasTouchStart(e) {
+        if (e.touches.length === 2) {
+            this.initialPinchDistance = this.getPinchDistance(e.touches);
+            this.initialPinchPercent = this.currentPercent;
+        }
+    }
+
+    onCanvasTouchMove(e) {
+        // If OrbitControls is enabled, let it handle the camera instead of scaling the model
+        if (this.experience.camera?.controls?.enabled) return;
+
+        if (e.touches.length === 2 && this.initialPinchDistance !== null) {
+            e.preventDefault(); // Prevent default browser zoom/scroll
+            
+            const currentDistance = this.getPinchDistance(e.touches);
+            const distanceDelta = currentDistance - this.initialPinchDistance;
+            
+            // Moving fingers apart (distanceDelta > 0) should zoom IN (lower percent)
+            const sensitivity = 0.2; 
+            
+            let newPercent = this.initialPinchPercent - (distanceDelta * sensitivity);
+            this.currentPercent = Math.max(0, Math.min(100, newPercent));
+            
+            this.updateUI();
+        }
+    }
+
+    onCanvasTouchEnd(e) {
+        if (e.touches.length < 2) {
+            this.initialPinchDistance = null;
+            this.initialPinchPercent = null;
+        }
+    }
+
+    onCanvasWheel(e) {
+        if (this.experience.camera?.controls?.enabled) return;
+        
+        // Prevent default page scroll
+        e.preventDefault();
+        
+        // Scroll down (positive delta) -> zoom out (higher percent)
+        const sensitivity = 0.05;
+        let newPercent = this.currentPercent + (e.deltaY * sensitivity);
+        this.currentPercent = Math.max(0, Math.min(100, newPercent));
+        
+        this.updateUI();
     }
 
     updateScale() {
