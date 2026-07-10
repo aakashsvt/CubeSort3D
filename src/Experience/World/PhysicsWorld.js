@@ -20,7 +20,7 @@ export default class PhysicsWorld {
             enableSafetyNet: true,
             netRadiusOffset: 0.0,
             netHalfHeight: 3.0,
-            netOffsetY: 0.11,
+            netOffsetY: 0.12,
             ccdEnabled: false,
             solverIterations: 4
         }
