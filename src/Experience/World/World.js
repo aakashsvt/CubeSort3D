@@ -24,7 +24,7 @@ export default class World
             this.binManager = new BinManager()
             this.roulette = new Roulette(this.physicsWorld)
             
-            this.cubeManager = new CubeManager(this.scene, this.physicsWorld, this.binManager, this.roulette.group)
+            this.cubeManager = new CubeManager(this.scene, this.physicsWorld, this.binManager, this.roulette)
             this.trayController = new TrayController(this.binManager)
             
             this.voxelLevel = new VoxelLevel()

@@ -14,8 +14,7 @@ export default class Roulette {
         this.wallParams = {
             radiusOffset: 0.0,
             height: 2.0,
-            posY: 0.9,
-            netOffsetY: 0.12 // Lowered slightly based on feedback
+            posY: 0.9
         }
 
         this.coneParams = {
@@ -122,7 +121,7 @@ export default class Roulette {
 
         if (this.physicsWorld) {
             this.physicsWorld.ready.then(() => {
-                this.physicsWorld.createRouletteBody(this.group, this.model, this.wallParams.netOffsetY)
+                this.physicsWorld.createRouletteBody(this.group, this.model)
             })
         }
     }
@@ -162,14 +161,13 @@ export default class Roulette {
             
             const updateWallPhysics = () => {
                 if (this.physicsWorld) {
-                    this.physicsWorld.updateRouletteBody(this.group, this.model, this.wallParams.netOffsetY)
+                    this.physicsWorld.updateRouletteBody(this.group, this.model)
                 }
             }
 
             wallFolder.add(this.wallParams, 'radius').min(1).max(10).step(0.01).name('Radius').onChange(updateWallVisuals).onFinishChange(updateWallPhysics)
             wallFolder.add(this.wallParams, 'height').min(0.1).max(15).step(0.01).name('Height').onChange(updateWallVisuals).onFinishChange(updateWallPhysics)
             wallFolder.add(this.wallParams, 'posY').min(-5).max(10).step(0.01).name('Height Offset (Y)').onChange(updateWallVisuals).onFinishChange(updateWallPhysics)
-            wallFolder.add(this.wallParams, 'netOffsetY').min(-5).max(5).step(0.01).name('Floor Net Offset Y').onFinishChange(updateWallPhysics)
             wallFolder.add(this.wallMaterial, 'opacity').min(0).max(1).step(0.01).name('Debug Opacity')
             
             const coneFolder = this.debugFolder.addFolder('Deflector Cone')

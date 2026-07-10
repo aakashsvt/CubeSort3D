@@ -13,7 +13,14 @@ export default class PhysicsWorld {
             gravity: -60.0,
             restitution: 0.5,
             friction: 0.6,
-            debugRender: false
+            debugRender: false,
+            enableTrimesh: true,
+            enableWall: true,
+            enableCone: false,
+            enableSafetyNet: true,
+            netRadiusOffset: 0.0,
+            netHalfHeight: 3.0,
+            netOffsetY: 0.11
         }
         
         this.debugLines = null
@@ -46,6 +53,17 @@ export default class PhysicsWorld {
                     this.debugLines.visible = false
                 }
             })
+            
+            const collidersFolder = this.debugFolder.addFolder('Roulette Colliders')
+            collidersFolder.add(this.physicsParams, 'enableTrimesh').name('Trimesh').onChange(() => this.rebuildRouletteBody())
+            collidersFolder.add(this.physicsParams, 'enableWall').name('Wall').onChange(() => this.rebuildRouletteBody())
+            collidersFolder.add(this.physicsParams, 'enableCone').name('Cone').onChange(() => this.rebuildRouletteBody())
+            
+            const safetyNetFolder = this.debugFolder.addFolder('Safety Net Collider')
+            safetyNetFolder.add(this.physicsParams, 'enableSafetyNet').name('Enable').onChange(() => this.rebuildRouletteBody())
+            safetyNetFolder.add(this.physicsParams, 'netRadiusOffset').min(-5).max(5).step(0.01).name('Radius Offset').onChange(() => this.rebuildRouletteBody())
+            safetyNetFolder.add(this.physicsParams, 'netHalfHeight').min(0.1).max(10).step(0.01).name('Half-Height').onChange(() => this.rebuildRouletteBody())
+            safetyNetFolder.add(this.physicsParams, 'netOffsetY').min(-5).max(5).step(0.01).name('Offset Y').onChange(() => this.rebuildRouletteBody())
         }
     }
 
@@ -61,7 +79,13 @@ export default class PhysicsWorld {
         this.world.integrationParameters.numAdditionalFrictionIterations = 2; // Default is 4
     }
 
-    createRouletteBody(rouletteGroup, rouletteModel, netOffsetY = 0) {
+    rebuildRouletteBody() {
+        if (this.rouletteGroup && this.rouletteModel) {
+            this.updateRouletteBody(this.rouletteGroup, this.rouletteModel)
+        }
+    }
+
+    createRouletteBody(rouletteGroup, rouletteModel) {
         if (!this.world) return
 
         this.rouletteGroup = rouletteGroup
@@ -92,7 +116,10 @@ export default class PhysicsWorld {
                     localBox.union(childBox)
                 }
 
-                // Generate trimesh for EVERYTHING (both roulette and wall) to perfectly fit
+                // Generate trimesh for roulette and wall (skip based on physicsParams)
+                if (child.name === 'InvisibleWall' && !this.physicsParams.enableWall) return
+                if (child.name === 'DeflectorCone' && !this.physicsParams.enableCone) return
+                if (child.name !== 'InvisibleWall' && child.name !== 'DeflectorCone' && !this.physicsParams.enableTrimesh) return
                 const geometry = child.geometry.clone()
                 const matrix = new THREE.Matrix4()
                 matrix.copy(child.matrixWorld)
@@ -127,8 +154,8 @@ export default class PhysicsWorld {
                     colliderDesc.setFriction(0.0) // Slippery wall/cone
                     colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min) // Force 0 friction!
                 } else {
-                    colliderDesc.setFriction(5.0) // Normal friction
-                    colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Max)
+                    colliderDesc.setFriction(0.3) // Low friction — enough to settle on tilt, not enough to fling outward
+                    colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Average)
                 }
                 
                 this.world.createCollider(colliderDesc, this.rouletteBody)
@@ -139,36 +166,38 @@ export default class PhysicsWorld {
         // SAFETY NET (Thick Cylinder)
         // Placed exactly at the bottom bound of the model to catch tunneling cubes.
         // ----------------------------------------------------------------
-        const size = localBox.getSize(new THREE.Vector3())
-        const localRadius = Math.max(size.x, size.z) / 2
-        const localMinY = localBox.min.y
+        if (this.physicsParams.enableSafetyNet) {
+            const size = localBox.getSize(new THREE.Vector3())
+            const localRadius = (Math.max(size.x, size.z) / 2) + this.physicsParams.netRadiusOffset
+            const localMinY = localBox.min.y
 
-        const worldScale = new THREE.Vector3()
-        rouletteModel.matrixWorld.decompose(new THREE.Vector3(), new THREE.Quaternion(), worldScale)
+            const worldScale = new THREE.Vector3()
+            rouletteModel.matrixWorld.decompose(new THREE.Vector3(), new THREE.Quaternion(), worldScale)
 
-        const scaledRadius = localRadius * Math.max(worldScale.x, worldScale.z)
-        const halfHeight = 3.0 // 6.0 unit thick safety net (prevents tunneling at high -60 gravity without needing expensive CCD)
-        const scaledHalfHeight = halfHeight * worldScale.y
-        
-        // Position the top of the cylinder at the lowest point of the model + the user offset
-        const cyCenterY = ((localMinY + netOffsetY) * worldScale.y) - scaledHalfHeight
+            const scaledRadius = localRadius * Math.max(worldScale.x, worldScale.z)
+            const halfHeight = this.physicsParams.netHalfHeight // 6.0 unit thick safety net (prevents tunneling at high -60 gravity without needing expensive CCD)
+            const scaledHalfHeight = halfHeight * worldScale.y
+            
+            // Position the top of the cylinder at the lowest point of the model + the user offset
+            const cyCenterY = ((localMinY + this.physicsParams.netOffsetY) * worldScale.y) - scaledHalfHeight
 
-        let netDesc = RAPIER.ColliderDesc.cylinder(scaledHalfHeight, scaledRadius)
-        netDesc.setTranslation(0, cyCenterY, 0)
-        netDesc.setRestitution(0.1)
-        netDesc.setFriction(5.0)
-        netDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Max)
-        
-        this.world.createCollider(netDesc, this.rouletteBody)
+            let netDesc = RAPIER.ColliderDesc.cylinder(scaledHalfHeight, scaledRadius)
+            netDesc.setTranslation(0, cyCenterY, 0)
+            netDesc.setRestitution(0.1)
+            netDesc.setFriction(0.3)
+            netDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Average)
+            
+            this.world.createCollider(netDesc, this.rouletteBody)
+        }
     }
 
-    updateRouletteBody(rouletteGroup, rouletteModel, netOffsetY = 0) {
+    updateRouletteBody(rouletteGroup, rouletteModel) {
         if (!this.world) return
         if (this.rouletteBody) {
             this.world.removeRigidBody(this.rouletteBody)
             this.rouletteBody = null
         }
-        this.createRouletteBody(rouletteGroup, rouletteModel, netOffsetY)
+        this.createRouletteBody(rouletteGroup, rouletteModel)
     }
 
     createCubeBody(worldPos, worldQuat, colliderSize) {
