@@ -68,14 +68,9 @@ export default class TrayUI {
         retryBtn.className = 'level-fail-retry-btn';
         retryBtn.innerText = 'RETRY';
         retryBtn.onclick = () => {
-            // Fetch current level json and reset
-            const levels = ['level data/Rubik_Cube.json', 'level data/House.json'];
-            
-            const loader = new THREE.FileLoader();
-            loader.load(levels[window.currentLevelIndex], (data) => {
-                const json = JSON.parse(data);
-                window.experience.world.resetLevel(json);
-            });
+            if (window.experience && window.experience.world && window.experience.world.levelManager) {
+                window.experience.world.levelManager.retryLevel();
+            }
         };
         
         this.failOverlay.appendChild(banner);
@@ -102,16 +97,9 @@ export default class TrayUI {
         nextBtn.className = 'level-fail-retry-btn';
         nextBtn.innerText = 'NEXT LEVEL';
         nextBtn.onclick = () => {
-            window.currentLevelIndex++;
-            
-            const levels = ['level data/Rubik_Cube.json', 'level data/House.json'];
-            if (window.currentLevelIndex >= levels.length) window.currentLevelIndex = 0;
-            
-            const loader = new THREE.FileLoader();
-            loader.load(levels[window.currentLevelIndex], (data) => {
-                const json = JSON.parse(data);
-                window.experience.world.resetLevel(json);
-            });
+            if (window.experience && window.experience.world && window.experience.world.levelManager) {
+                window.experience.world.levelManager.loadNextLevel();
+            }
         };
         
         this.completeOverlay.appendChild(banner);
