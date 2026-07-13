@@ -69,8 +69,9 @@ export default class VoxelLevel {
         this.cubeSize = dashboard.cubeSize || 1
         const palette = dashboard.palette || []
 
-        // Fallback to default scale
-        this.container.scale.set(0.335, 0.335, 0.335)
+        // Fallback to default scale if not specified in JSON
+        const scale = dashboard.modelScale || 0.335
+        this.container.scale.set(scale, scale, scale)
 
         // Ensure container has 0 rotation (no isometric tilt), as requested by user
         this.container.rotation.set(0, 0, 0)
