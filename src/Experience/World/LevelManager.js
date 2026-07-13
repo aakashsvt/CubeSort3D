@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { LEVELS } from '../constants.js';
 
 export default class LevelManager {
     constructor(world) {
@@ -6,10 +7,7 @@ export default class LevelManager {
         this.experience = world.experience;
         this.scene = world.scene;
         
-        this.levels = [
-            'level data/Rubik_Cube.json',
-            'level data/House.json'
-        ];
+        this.levels = LEVELS;
         this.currentLevelIndex = 0;
     }
 
@@ -54,6 +52,12 @@ export default class LevelManager {
 
         // 1. Clear Voxel Controls
         this.world.voxelControls.spawnGroups = [];
+        if (this.world.voxelControls.touch) {
+            this.world.voxelControls.touch.targetRotationY = 0;
+        }
+        if (this.world.voxelLevel.spinGroup) {
+            this.world.voxelLevel.spinGroup.rotation.y = 0;
+        }
         
         // 2. Clear Voxel Level
         this.world.voxelLevel.clear();

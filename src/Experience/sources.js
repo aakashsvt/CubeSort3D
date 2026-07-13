@@ -1,15 +1,10 @@
-const levels = [
-    'level data/Rubik_Cube.json',
-    'level data/House.json'
-];
-
-window.currentLevelIndex = 0;
+import { LEVELS } from './constants.js';
 
 export default [
     {
         name: 'levelData',
         type: 'json',
-        path: levels[0]
+        path: LEVELS[0]
     },
     {
         name: 'rouletteModel',
