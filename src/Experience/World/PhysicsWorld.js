@@ -225,6 +225,19 @@ export default class PhysicsWorld {
             netDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Average)
             
             this.world.createCollider(netDesc, this.rouletteBody)
+
+            // ----------------------------------------------------------------
+            // SECONDARY SAFETY NET
+            // Placed immediately below the first one, slightly wider, to catch anything that managed to tunnel through the first thick cylinder
+            // ----------------------------------------------------------------
+            const cyCenterY2 = cyCenterY - (scaledHalfHeight * 2.1) // 2.1 gives a tiny gap, placing it just under the first one
+            let netDesc2 = RAPIER.ColliderDesc.cylinder(scaledHalfHeight, scaledRadius * 1.2) // 20% wider to catch outward flinging cubes
+            netDesc2.setTranslation(cyCenterX, cyCenterY2, cyCenterZ)
+            netDesc2.setRestitution(0.0) // 0 restitution so they splat instead of bouncing back up through the net
+            netDesc2.setFriction(0.5)
+            netDesc2.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Average)
+            
+            this.world.createCollider(netDesc2, this.rouletteBody)
         }
     }
 
