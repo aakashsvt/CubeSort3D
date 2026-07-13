@@ -46,5 +46,101 @@ export default class World
         if(this.voxelLevel) this.voxelLevel.update?.()
         if(this.voxelControls) this.voxelControls.update()
         if(this.roulette) this.roulette.update()
+
+        // Win condition check
+        if (this.voxelLevel && this.cubeManager && this.voxelControls && this.trayController) {
+            if (!this.trayController.levelEnded && this.voxelLevel.cubes.length > 0) {
+                const noActiveCubes = this.voxelLevel.cubes.every(c => !c.active);
+                const noSpawningCubes = this.voxelControls.spawnGroups.length === 0;
+                const noTrayCubes = this.cubeManager.getActiveTrayCubeCount() === 0;
+                
+                if (noActiveCubes && noSpawningCubes && noTrayCubes) {
+                    this.trayController.levelEnded = true;
+                    console.log("Player wins!");
+                    this.trayController.ui.showLevelCompleteUI();
+                }
+            }
+        }
+    }
+
+    resetLevel(newLevelData) {
+        this.resources.items.levelData = newLevelData;
+
+        // 1. Clear Voxel Controls
+        this.voxelControls.spawnGroups = [];
+        
+        // 2. Clear Voxel Level
+        this.voxelLevel.clear();
+        
+        // 3. Clear Cube Manager
+        if (this.cubeManager.dynamicCubes) {
+            for (const item of this.cubeManager.dynamicCubes) {
+                if (item.body) this.physicsWorld.world.removeRigidBody(item.body);
+            }
+            this.cubeManager.dynamicCubes = [];
+        }
+        if (this.cubeManager.dynamicInstancedMesh) {
+            this.scene.remove(this.cubeManager.dynamicInstancedMesh);
+            this.cubeManager.dynamicInstancedMesh.geometry.dispose();
+            this.cubeManager.dynamicInstancedMesh.material.dispose();
+            this.cubeManager.dynamicInstancedMesh = null;
+        }
+        this.cubeManager.availableInstanceIds = [];
+        this.cubeManager.colorRouteTimers = {};
+        this.cubeManager.colorRouteBatchCounters = {};
+
+        // 4. Clear Bin Manager
+        if (this.binManager.binsGroup) {
+            this.scene.remove(this.binManager.binsGroup);
+            if (this.binManager.binInstancedMeshes) {
+                for (const mesh of this.binManager.binInstancedMeshes) {
+                    mesh.geometry.dispose();
+                    if(mesh.material) mesh.material.dispose();
+                }
+            }
+            if (this.binManager.internalCubeInstancedMesh) {
+                this.binManager.internalCubeInstancedMesh.geometry.dispose();
+                if(this.binManager.internalCubeInstancedMesh.material) this.binManager.internalCubeInstancedMesh.material.dispose();
+            }
+            if (this.binManager.shadowInstancedMeshes) {
+                for (const mesh of this.binManager.shadowInstancedMeshes) {
+                    mesh.geometry.dispose();
+                    if(mesh.material) mesh.material.dispose();
+                }
+            }
+            for (const item of this.binManager.spawnedBins) {
+                if (item.colorBin.labelMesh) {
+                    item.colorBin.labelMesh.geometry.dispose();
+                    item.colorBin.labelMesh.material.dispose();
+                }
+            }
+        }
+        this.binManager.spawnedBins = [];
+        this.binManager.exitingBins = [];
+        this.binManager.roundRobinIndices = {};
+        
+        // 5. Reset Tray Controller
+        this.trayController.levelEnded = false;
+        this.trayController.failTimer = 0;
+        this.trayController.overCapacityWarningStarted = false;
+        this.trayController.isTimerActive = false;
+        const dashboard = newLevelData.dashboard || {};
+        this.trayController.maxTrayCapacity = dashboard.trayCapacityCubes || 50;
+        this.trayController.ui.maxCountEl.innerText = this.trayController.maxTrayCapacity.toString();
+        
+        if (this.trayController.ui) {
+            if (this.trayController.ui.failOverlay && this.trayController.ui.failOverlay.parentNode) {
+                this.trayController.ui.failOverlay.parentNode.removeChild(this.trayController.ui.failOverlay);
+                this.trayController.ui.failOverlay = null;
+            }
+            if (this.trayController.ui.completeOverlay && this.trayController.ui.completeOverlay.parentNode) {
+                this.trayController.ui.completeOverlay.parentNode.removeChild(this.trayController.ui.completeOverlay);
+                this.trayController.ui.completeOverlay = null;
+            }
+        }
+        
+        // 6. Re-init Level & Bins
+        this.voxelLevel.setModel();
+        this.binManager.configureBins();
     }
 }

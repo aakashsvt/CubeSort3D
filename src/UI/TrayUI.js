@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 export default class TrayUI {
     constructor() {
         this.createCounterUI();
@@ -66,7 +68,14 @@ export default class TrayUI {
         retryBtn.className = 'level-fail-retry-btn';
         retryBtn.innerText = 'RETRY';
         retryBtn.onclick = () => {
-            window.location.reload();
+            // Fetch current level json and reset
+            const levels = ['level data/Rubik_Cube.json', 'level data/House.json'];
+            
+            const loader = new THREE.FileLoader();
+            loader.load(levels[window.currentLevelIndex], (data) => {
+                const json = JSON.parse(data);
+                window.experience.world.resetLevel(json);
+            });
         };
         
         this.failOverlay.appendChild(banner);
@@ -76,5 +85,41 @@ export default class TrayUI {
         // Force reflow
         void this.failOverlay.offsetWidth;
         this.failOverlay.classList.add('visible');
+    }
+
+    showLevelCompleteUI() {
+        if (this.completeOverlay) return;
+
+        this.completeOverlay = document.createElement('div');
+        this.completeOverlay.className = 'level-fail-overlay'; // Reusing the same styling for simplicity, but can be customized
+        this.completeOverlay.style.background = 'rgba(0, 200, 50, 0.85)'; // Greenish background
+        
+        const banner = document.createElement('div');
+        banner.className = 'level-fail-banner';
+        banner.innerText = 'LEVEL COMPLETE!';
+        
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'level-fail-retry-btn';
+        nextBtn.innerText = 'NEXT LEVEL';
+        nextBtn.onclick = () => {
+            window.currentLevelIndex++;
+            
+            const levels = ['level data/Rubik_Cube.json', 'level data/House.json'];
+            if (window.currentLevelIndex >= levels.length) window.currentLevelIndex = 0;
+            
+            const loader = new THREE.FileLoader();
+            loader.load(levels[window.currentLevelIndex], (data) => {
+                const json = JSON.parse(data);
+                window.experience.world.resetLevel(json);
+            });
+        };
+        
+        this.completeOverlay.appendChild(banner);
+        this.completeOverlay.appendChild(nextBtn);
+        document.body.appendChild(this.completeOverlay);
+        
+        // Force reflow
+        void this.completeOverlay.offsetWidth;
+        this.completeOverlay.classList.add('visible');
     }
 }

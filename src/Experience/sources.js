@@ -1,8 +1,15 @@
+const levels = [
+    'level data/Rubik_Cube.json',
+    'level data/House.json'
+];
+
+window.currentLevelIndex = 0;
+
 export default [
     {
         name: 'levelData',
         type: 'json',
-        path: 'level data/House.json'
+        path: levels[0]
     },
     {
         name: 'rouletteModel',

@@ -58,8 +58,9 @@ export default class VoxelLevel {
     }
 
     setModel() {
-        const json = this.resource
-        this.clear()
+        this.resource = this.resources.items.levelData;
+        const json = this.resource;
+        this.clear();
 
         // Extract data based on the LevelAuthoringData JSON structure you provided
         const modelName = json.levelName || (json.dashboard && json.dashboard.modelName) || 'Unknown Level'
