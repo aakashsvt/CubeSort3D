@@ -71,7 +71,12 @@ export default class VoxelLevel {
 
         // Fallback to default scale if not specified in JSON
         const scale = dashboard.modelScale || 0.335
+        this.baseScale = scale
         this.container.scale.set(scale, scale, scale)
+        
+        if (this.experience.zoomSlider) {
+            this.experience.zoomSlider.setBaseScale(scale)
+        }
 
         // Ensure container has 0 rotation (no isometric tilt), as requested by user
         this.container.rotation.set(0, 0, 0)

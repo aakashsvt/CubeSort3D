@@ -199,9 +199,9 @@ export default class VoxelControls {
                     const color = new THREE.Color()
                     this.voxelLevel.instancedMesh.getColorAt(c.instanceId, color)
                     const targetScale = 0.75
-                    // Ignore the dynamic slider scale (scale.x) and use the default base scale (0.335)
+                    // Ignore the dynamic slider scale (scale.x) and use the default base scale
                     // so they always fall at the normal voxel size regardless of how zoomed in the group is.
-                    const defaultBaseScale = 0.335
+                    const defaultBaseScale = this.voxelLevel.baseScale || 0.335
                     const visualScale = defaultBaseScale * targetScale
                     const colliderSize = this.voxelLevel.cubeSize * defaultBaseScale * targetScale
 

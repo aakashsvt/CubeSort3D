@@ -10,8 +10,11 @@ export default class ZoomSlider {
 
         this.isDragging = false;
         this.currentPercent = 50; // Default to middle
-        this.minScale = 0.295;
-        this.maxScale = 0.375;
+        
+        // Use a base scale and calculate min/max relative to it
+        this.baseScale = 0.335;
+        this.minScale = this.baseScale * 0.88;
+        this.maxScale = this.baseScale * 1.12;
         
         this.initialPinchDistance = null;
         this.initialPinchPercent = null;
@@ -110,6 +113,15 @@ export default class ZoomSlider {
         if (voxelContainer) {
             voxelContainer.scale.set(scale, scale, scale);
         }
+    }
+
+    setBaseScale(baseScale) {
+        this.baseScale = baseScale;
+        this.minScale = this.baseScale * 0.88;
+        this.maxScale = this.baseScale * 1.12;
+        
+        // Optionally update the model's scale right away if the slider is not at 50%
+        this.updateScale();
     }
 
     updateUI() {
