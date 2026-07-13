@@ -32,6 +32,8 @@ export default class VoxelControls {
         this.spawnGroups = []
         this.spawnTimer = 0
 
+        this.waitForSettle = false
+
         this.setDebug()
         this.setInteraction()
     }
@@ -42,6 +44,7 @@ export default class VoxelControls {
             this.debugFolder.add(this.touch, 'rotationSpeed').min(0).max(20).step(0.1).name('swipeSpeed')
             this.debugFolder.add(this.touch, 'dampingFactor').min(0.01).max(1).step(0.01).name('dampingFactor')
             this.debugFolder.add(this, 'staggerDelay').min(0).max(200).step(1).name('Fall Stagger (ms)')
+            this.debugFolder.add(this, 'waitForSettle').name('Wait For Settle')
         }
     }
 
@@ -149,7 +152,7 @@ export default class VoxelControls {
             const clickedColorHex = color.getHex()
 
             // Block if 2 or more DIFFERENT colors are already falling, AND we clicked a new color
-            if (fallingColors.size >= 2 && !fallingColors.has(clickedColorHex)) {
+            if (this.waitForSettle && fallingColors.size >= 2 && !fallingColors.has(clickedColorHex)) {
                 this.showSettleWarning()
                 return
             }
