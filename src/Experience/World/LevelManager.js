@@ -119,6 +119,12 @@ export default class LevelManager {
         if (this.world.trayController.ui && this.world.trayController.ui.maxCountEl) {
             this.world.trayController.ui.maxCountEl.innerText = this.world.trayController.maxTrayCapacity.toString();
         }
+
+        const levelHeading = document.querySelector('.top-bar h1');
+        if (levelHeading) {
+            levelHeading.innerText = `LEVEL ${this.currentLevelIndex + 1}`;
+        }
+
         
         if (this.world.trayController.ui) {
             if (this.world.trayController.ui.failOverlay && this.world.trayController.ui.failOverlay.parentNode) {
