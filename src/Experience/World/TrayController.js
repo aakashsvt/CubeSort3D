@@ -23,8 +23,6 @@ export default class TrayController {
         
         if (!this.levelEnded) {
             const isOverCapacity = currentCount > this.maxTrayCapacity;
-            this.ui.updateCounter(currentCount, this.maxTrayCapacity, isOverCapacity);
-            
             if (isOverCapacity) {
                 let activeFalling = cubeManager.hasActiveFallingCubes();
 
@@ -50,6 +48,8 @@ export default class TrayController {
                 this.isTimerActive = false;
                 this.failTimer = 0;
             }
+
+            this.ui.updateCounter(currentCount, this.maxTrayCapacity, this.overCapacityWarningStarted);
         }
     }
 }

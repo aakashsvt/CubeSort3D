@@ -127,11 +127,22 @@ body.is-pc .webgl {
     text-align: center;
 }
 
-.tray-counter-circle.over-capacity {
-    --fill-color: #ff3333;
+@keyframes blink-border {
+    0%, 100% { background: #ff3333; }
+    50% { background: #3498db; }
 }
-.tray-counter-circle.over-capacity::before {
-    background: #7a1111;
+
+@keyframes blink-text {
+    0%, 100% { transform: scale(1.15); color: #ff3333; }
+    50% { transform: scale(1); color: #ffffff; }
+}
+
+.tray-counter-circle.over-capacity {
+    animation: blink-border 0.5s infinite ease-in-out;
+}
+
+.tray-counter-circle.over-capacity .tray-counter-current {
+    animation: blink-text 0.5s infinite ease-in-out;
 }
 
 .settle-warning-popup {
