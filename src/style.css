@@ -94,7 +94,7 @@ body.is-pc .webgl {
 }
 
 .tray-counter-current {
-    font-size: clamp(15px, 3.8vmin, 24px);
+    font-size: clamp(14.4px, 3.65vmin, 23px);
     line-height: 1;
     margin-bottom: 2px;
     position: relative;
@@ -111,7 +111,7 @@ body.is-pc .webgl {
 }
 
 .tray-counter-max {
-    font-size: clamp(15px, 3.8vmin, 24px);
+    font-size: clamp(14.4px, 3.65vmin, 23px);
     line-height: 1;
     margin-top: 2px;
     position: relative;
@@ -122,7 +122,7 @@ body.is-pc .webgl {
     color: #ff3333;
     font-family: system-ui, -apple-system, sans-serif;
     font-weight: 900;
-    font-size: clamp(14px, 3.5vmin, 22px);
+    font-size: clamp(13.4px, 3.36vmin, 21.1px);
     text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
     text-align: center;
 }
@@ -241,10 +241,10 @@ body.is-pc .tray-counter-circle {
     height: clamp(60px, 12vmin, 85px);
 }
 body.is-pc .tray-counter-current, body.is-pc .tray-counter-max {
-    font-size: clamp(12px, 2.5vmin, 18px);
+    font-size: clamp(11.5px, 2.4vmin, 17.3px);
 }
 body.is-pc .tray-counter-warning {
-    font-size: clamp(11px, 2.5vmin, 16px);
+    font-size: clamp(10.5px, 2.4vmin, 15.4px);
 }
 body.is-pc .settle-warning-popup {
     font-size: clamp(10px, 2.5vmin, 14px);

@@ -95,6 +95,17 @@ export default class VoxelLevel {
             this.modelGroup.rotation.set(0, 0, 0)
         }
 
+        // Apply custom position offset if available
+        if (dashboard.modelPositionOffset) {
+            this.container.position.set(
+                dashboard.modelPositionOffset.x || 0,
+                dashboard.modelPositionOffset.y || 0,
+                dashboard.modelPositionOffset.z || 0
+            )
+        } else {
+            this.container.position.set(0, 0, 0)
+        }
+
         // We look for lastGeneratedCubes, but fall back to cubes just in case
         const cubesData = dashboard.lastGeneratedCubes || json.cubes || []
 
