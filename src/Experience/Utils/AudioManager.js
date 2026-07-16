@@ -1,8 +1,8 @@
 import * as THREE from 'three'
-import Experience from '../../Experience'
+import Experience from '../Experience.js'
 
 export default class AudioManager {
-    constructor() {
+    constructor() { 
         this.experience = new Experience()
         this.camera = this.experience.camera.instance
         this.listener = new THREE.AudioListener()
@@ -75,6 +75,122 @@ export default class AudioManager {
             return
         }
         object3d.add(entry.audio)
+    }
+
+    playSynthTap() {
+        const ctx = this.listener.context
+        if (ctx.state !== 'running') return
+
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+
+        osc.type = 'sine'
+        // High pitched pop
+        osc.frequency.setValueAtTime(800, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.05)
+
+        gain.gain.setValueAtTime(0.5, ctx.currentTime)
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05)
+
+        osc.connect(gain)
+        gain.connect(this.listener.getInput())
+
+        osc.start()
+        osc.stop(ctx.currentTime + 0.05)
+    }
+
+    playSynthFall() {
+        const ctx = this.listener.context
+        if (ctx.state !== 'running') return
+
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+
+        osc.type = 'sine'
+        // Bassy pop
+        osc.frequency.setValueAtTime(400, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.05)
+
+        gain.gain.setValueAtTime(0.3, ctx.currentTime) // reduced volume
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05)
+
+        osc.connect(gain)
+        gain.connect(this.listener.getInput())
+
+        osc.start()
+        osc.stop(ctx.currentTime + 0.05)
+    }
+
+    playSynthCollect() {
+        const ctx = this.listener.context
+        if (ctx.state !== 'running') return
+
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+
+        osc.type = 'sine'
+        // Quick subtle lower pitched chirp for collecting a single cube
+        osc.frequency.setValueAtTime(400, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 0.08)
+
+        gain.gain.setValueAtTime(0.08, ctx.currentTime) // reduced volume
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08)
+
+        osc.connect(gain)
+        gain.connect(this.listener.getInput())
+
+        osc.start()
+        osc.stop(ctx.currentTime + 0.08)
+    }
+
+    playSynthBinFilled() {
+        const ctx = this.listener.context
+        if (ctx.state !== 'running') return
+
+        const now = ctx.currentTime
+
+        // "Ti" - short first note
+        const osc1 = ctx.createOscillator()
+        const gain1 = ctx.createGain()
+        osc1.type = 'sine'
+        osc1.frequency.setValueAtTime(900, now)
+        gain1.gain.setValueAtTime(0.6, now)
+        gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.1)
+        
+        osc1.connect(gain1)
+        gain1.connect(this.listener.getInput())
+        osc1.start(now)
+        osc1.stop(now + 0.15)
+
+        // "Dingggggg" - higher second note that rings out
+        const osc2 = ctx.createOscillator()
+        const gain2 = ctx.createGain()
+        osc2.type = 'sine'
+        osc2.frequency.setValueAtTime(1200, now + 0.1)
+        
+        gain2.gain.setValueAtTime(0, now)
+        gain2.gain.setValueAtTime(0.6, now + 0.1)
+        gain2.gain.exponentialRampToValueAtTime(0.01, now + 1.2)
+        
+        osc2.connect(gain2)
+        gain2.connect(this.listener.getInput())
+        osc2.start(now + 0.1)
+        osc2.stop(now + 1.2)
+
+        // Add a faint high-pitched metallic overtone for the "ding"
+        const osc3 = ctx.createOscillator()
+        const gain3 = ctx.createGain()
+        osc3.type = 'triangle'
+        osc3.frequency.setValueAtTime(2400, now + 0.1)
+        
+        gain3.gain.setValueAtTime(0, now)
+        gain3.gain.setValueAtTime(0.2, now + 0.1)
+        gain3.gain.exponentialRampToValueAtTime(0.01, now + 1.0)
+        
+        osc3.connect(gain3)
+        gain3.connect(this.listener.getInput())
+        osc3.start(now + 0.1)
+        osc3.stop(now + 1.2)
     }
 
     /** Play an existing sound */

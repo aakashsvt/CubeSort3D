@@ -31,7 +31,29 @@ export default class World
             this.voxelControls = new VoxelControls(this.voxelLevel.spinGroup, this.voxelLevel, this.physicsWorld, this.cubeManager)
             this.environment = new Environment()
             this.levelManager = new LevelManager(this)
+            
+            this.initAudio()
         })
+    }
+
+    initAudio()
+    {
+        const am = this.experience.audioManager
+        if(!am) return
+
+        if(this.resources.items.bgm) {
+            am.create('bgm', { buffer: this.resources.items.bgm, loop: true, volume: 0.0 })
+            am.play('bgm')
+        }
+        if(this.resources.items.cubeTap) {
+            am.create('cubeTap', { buffer: this.resources.items.cubeTap, loop: false, volume: 1.0 })
+        }
+        if(this.resources.items.cubeFall) {
+            am.create('cubeFall', { buffer: this.resources.items.cubeFall, loop: false, volume: 1.0 })
+        }
+        if(this.resources.items.binFilled) {
+            am.create('binFilled', { buffer: this.resources.items.binFilled, loop: false, volume: 1.0 })
+        }
     }
 
     update()

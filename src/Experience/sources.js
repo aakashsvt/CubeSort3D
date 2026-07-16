@@ -30,5 +30,10 @@ export default [
         name: 'binShadowModel',
         type: 'gltfModel',
         path: 'models/bin-shadow.glb'
+    },
+    {
+        name: 'bgm',
+        type: 'audio',
+        path: 'audios/BGM-1.mp3'
     }
 ]

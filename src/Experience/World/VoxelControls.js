@@ -157,6 +157,10 @@ export default class VoxelControls {
                 return
             }
 
+            if (this.experience && this.experience.audioManager) {
+                this.experience.audioManager.playSynthTap()
+            }
+
             const cube = this.voxelLevel.cubes.find(c => c.instanceId === instanceId)
             if (!cube || !cube.active) return
 

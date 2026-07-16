@@ -1,8 +1,10 @@
 import * as THREE from 'three'
 import AnimatedRoutingStrategy from './AnimatedRoutingStrategy.js'
+import Experience from '../Experience.js'
 
 export default class CubeManager {
     constructor(scene, physicsWorld, binManager, roulette) {
+        this.experience = new Experience()
         this.scene = scene
         this.physicsWorld = physicsWorld
         this.binManager = binManager
@@ -131,7 +133,14 @@ export default class CubeManager {
                         binItem.colorBin.updateLabelText()
                         this.binManager.updateLayout()
 
+                        if (this.experience && this.experience.audioManager) {
+                            this.experience.audioManager.playSynthCollect()
+                        }
+
                         if (binItem.colorBin.currentCount >= binItem.colorBin.capacity) {
+                            if (this.experience && this.experience.audioManager) {
+                                this.experience.audioManager.playSynthBinFilled()
+                            }
                             this.binManager.advanceQueue(binItem.rIndex)
                         }
                     }
@@ -160,6 +169,13 @@ export default class CubeManager {
                 // On a surface, speed stays low for many frames — that's a real settle.
                 if (speed < 1.5) {
                     item.settledTime = (item.settledTime || 0) + dt
+                    
+                    if (translation.y < 1.0 && !item.hasPlayedImpactSound) {
+                        item.hasPlayedImpactSound = true
+                        if (this.experience && this.experience.audioManager) {
+                            this.experience.audioManager.playSynthFall()
+                        }
+                    }
                 } else {
                     item.settledTime = 0
                 }

@@ -9,6 +9,7 @@ import World from './World/World.js'
 import Resources from './Utils/Resources.js'
 import ZoomSlider from '../UI/ZoomSlider.js'
 import LoadingScreen from '../UI/LoadingScreen.js'
+import AudioManager from './Utils/AudioManager.js'
 
 import sources from './sources.js'
 
@@ -40,6 +41,7 @@ export default class Experience
         this.loadingScreen = new LoadingScreen(this)
         this.camera = new Camera()
         this.renderer = new Renderer()
+        this.audioManager = new AudioManager()
         this.world = new World()
         this.zoomSlider = new ZoomSlider(this)
 
