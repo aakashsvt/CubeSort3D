@@ -73,7 +73,21 @@ export default class VoxelLevel {
         // Fallback to default scale if not specified in JSON
         const scale = dashboard.modelScale || 0.335
         this.baseScale = scale
-        this.container.scale.set(scale, scale, scale)
+        
+        // Intro animation setup
+        this.introAnimation = {
+            active: true,
+            progress: 0,
+            duration: 1.2,
+            startY: Math.PI * 2 * 0.75, // 0.75 turns (270 degrees)
+            targetY: 0,
+            startScale: 0.001,
+            targetScale: scale
+        }
+        
+        // Set initial state
+        this.container.scale.set(this.introAnimation.startScale, this.introAnimation.startScale, this.introAnimation.startScale)
+        this.spinGroup.rotation.y = this.introAnimation.startY
         
         if (this.experience.zoomSlider) {
             this.experience.zoomSlider.setBaseScale(scale)
@@ -306,5 +320,28 @@ export default class VoxelLevel {
     destroy() {
         this.clear()
         this.scene.remove(this.container)
+    }
+
+    update() {
+        if (this.introAnimation && this.introAnimation.active) {
+            const dt = this.experience.time.delta / 1000
+            this.introAnimation.progress += dt / this.introAnimation.duration
+            
+            if (this.introAnimation.progress >= 1) {
+                this.introAnimation.progress = 1
+                this.introAnimation.active = false
+            }
+            
+            // Easing function (easeOutExpo for a snappy but smooth finish)
+            const t = this.introAnimation.progress
+            const easeOut = t === 1 ? 1 : 1 - Math.pow(2, -10 * t)
+            
+            // Lerp rotation
+            this.spinGroup.rotation.y = THREE.MathUtils.lerp(this.introAnimation.startY, this.introAnimation.targetY, easeOut)
+            
+            // Lerp scale
+            const currentScale = THREE.MathUtils.lerp(this.introAnimation.startScale, this.introAnimation.targetScale, easeOut)
+            this.container.scale.set(currentScale, currentScale, currentScale)
+        }
     }
 }
