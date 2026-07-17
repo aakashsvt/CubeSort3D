@@ -42,7 +42,7 @@ export default class World
         if(!am) return
 
         if(this.resources.items.bgm) {
-            am.create('bgm', { buffer: this.resources.items.bgm, loop: true, volume: 1.0 })
+            am.create('bgm', { buffer: this.resources.items.bgm, loop: true, volume: 0.5 })
             am.play('bgm')
         }
         if(this.resources.items.cubeTap) {
