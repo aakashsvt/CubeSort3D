@@ -227,9 +227,9 @@ export default class PhysicsWorld {
             this.world.createCollider(netDesc, this.rouletteBody)
 
             // SECONDARY SAFETY NET
-            // Placed at the exact same position but slightly wider, to catch anything flinging outwards
+            // Placed at the exact same position and radius to catch anything flinging outwards
             // ----------------------------------------------------------------
-            let netDesc2 = RAPIER.ColliderDesc.cylinder(scaledHalfHeight, scaledRadius * 1.2) // 20% wider to catch outward flinging cubes
+            let netDesc2 = RAPIER.ColliderDesc.cylinder(scaledHalfHeight, scaledRadius)
             netDesc2.setTranslation(cyCenterX, cyCenterY, cyCenterZ)
             netDesc2.setRestitution(0.0) // 0 restitution so they splat instead of bouncing back up through the net
             netDesc2.setFriction(0.5)
