@@ -192,17 +192,14 @@ export default class CubeManager {
                     this.physicsWorld.world.removeRigidBody(item.body)
                     item.body = null
 
-                    // Convert the cube's world position into the roulette model's local space
+                    // 1. Create a world matrix representing exactly where the physics engine put the cube
                     this.dummy.position.set(translation.x, translation.y, translation.z)
-                    // Force rotation to identity — the cube sits FLAT on the tray surface.
-                    // The tray's own tilt (from roulette.model.matrixWorld) will be inherited
-                    // automatically when we multiply matrices each frame.
-                    this.dummy.quaternion.identity()
+                    this.dummy.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w)
                     this.dummy.scale.set(item.scaleFactor, item.scaleFactor, item.scaleFactor)
                     this.dummy.updateMatrix()
 
-                    // Compute localMatrix = inverse(rouletteModelWorld) * cubeWorldMatrix
-                    // This gives us the cube's position relative to the spinning roulette model.
+                    // 2. Convert this exact world matrix into the roulette's local space
+                    // This perfectly preserves how the cube landed on slopes, walls, or the flat surface
                     const inverseRoulette = new THREE.Matrix4().copy(this.roulette.model.matrixWorld).invert()
                     item.localMatrix = new THREE.Matrix4().copy(inverseRoulette).multiply(this.dummy.matrix)
                 } else {
