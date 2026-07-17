@@ -22,7 +22,7 @@ export default class LevelManager {
             if (noActiveCubes && noSpawningCubes && noTrayCubes) {
                 this.world.trayController.levelEnded = true;
                 console.log("Player wins!");
-                this.world.trayController.ui.showLevelCompleteUI();
+                this.world.trayController.ui.showLevelCompleteUI(this.currentLevelIndex + 1);
             }
         }
     }

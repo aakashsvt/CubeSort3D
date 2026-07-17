@@ -82,19 +82,25 @@ export default class TrayUI {
         this.failOverlay.classList.add('visible');
     }
 
-    showLevelCompleteUI() {
+    showLevelCompleteUI(levelNumber = 1) {
         if (this.completeOverlay) return;
 
         this.completeOverlay = document.createElement('div');
-        this.completeOverlay.className = 'level-fail-overlay'; // Reusing the same styling for simplicity, but can be customized
-        this.completeOverlay.style.background = 'rgba(0, 200, 50, 0.85)'; // Greenish background
+        this.completeOverlay.className = 'level-complete-overlay';
+        
+        const header = document.createElement('div');
+        header.className = 'level-complete-header';
+        header.innerText = `LEVEL ${levelNumber}`;
         
         const banner = document.createElement('div');
-        banner.className = 'level-fail-banner';
-        banner.innerText = 'LEVEL COMPLETE!';
+        banner.className = 'level-complete-banner';
+        banner.innerText = 'SUCCESS!';
+        
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'level-complete-btn-container';
         
         const nextBtn = document.createElement('button');
-        nextBtn.className = 'level-fail-retry-btn';
+        nextBtn.className = 'level-complete-next-btn';
         nextBtn.innerText = 'NEXT LEVEL';
         nextBtn.onclick = () => {
             if (window.experience && window.experience.world && window.experience.world.levelManager) {
@@ -102,8 +108,11 @@ export default class TrayUI {
             }
         };
         
+        btnContainer.appendChild(nextBtn);
+        
+        this.completeOverlay.appendChild(header);
         this.completeOverlay.appendChild(banner);
-        this.completeOverlay.appendChild(nextBtn);
+        this.completeOverlay.appendChild(btnContainer);
         document.body.appendChild(this.completeOverlay);
         
         // Force reflow
