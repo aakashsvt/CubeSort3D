@@ -79,18 +79,22 @@ export default class AudioManager {
 
     playSynthTap() {
         const ctx = this.listener.context
-        if (ctx.state !== 'running') return
+        if (ctx.state !== 'running') {
+            ctx.resume()
+        }
 
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
 
         osc.type = 'sine'
-        // High pitched pop
-        osc.frequency.setValueAtTime(800, ctx.currentTime)
-        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.05)
+        
+        // Solid tap: very fast pitch drop creates a punchy "click" or "thud" (like hard plastic)
+        osc.frequency.setValueAtTime(600, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.03)
 
-        gain.gain.setValueAtTime(0.5, ctx.currentTime)
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05)
+        gain.gain.setValueAtTime(1.0, ctx.currentTime)
+        // Extremely fast decay for a solid, tight tap (50ms total)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05)
 
         osc.connect(gain)
         gain.connect(this.listener.getInput())
