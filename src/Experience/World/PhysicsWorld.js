@@ -22,8 +22,7 @@ export default class PhysicsWorld {
             netHalfHeight: 3.0,
             netOffsetY: 0.12,
             ccdEnabled: false,
-            solverIterations: 4,
-            maxPenetrationCorrection: 2.5 // Unity uses 2.5f by default
+            solverIterations: 4
         }
         
         this.debugLines = null
@@ -72,13 +71,10 @@ export default class PhysicsWorld {
             perfFolder.add(this.physicsParams, 'ccdEnabled').name('Enable CCD (Fix Tunneling)')
             perfFolder.add(this.physicsParams, 'solverIterations').min(1).max(10).step(1).name('Solver Iterations').onChange((v) => {
                 if (this.world) {
-                    this.world.integrationParameters.numSolverIterations = v
-                    this.world.integrationParameters.numAdditionalFrictionIterations = v
-                }
-            })
-            perfFolder.add(this.physicsParams, 'maxPenetrationCorrection').min(0.1).max(100.0).step(0.1).name('Max Depenetration').onChange((v) => {
-                if (this.world) {
-                    this.world.integrationParameters.maxPenetrationCorrection = v
+                    let params = this.world.integrationParameters;
+                    params.numSolverIterations = v;
+                    params.numAdditionalFrictionIterations = v;
+                    this.world.integrationParameters = params;
                 }
             })
         }
@@ -91,9 +87,10 @@ export default class PhysicsWorld {
         this.world = new RAPIER.World(gravity)
         
         // Setup iterations based on params
-        this.world.integrationParameters.numSolverIterations = this.physicsParams.solverIterations;
-        this.world.integrationParameters.numAdditionalFrictionIterations = this.physicsParams.solverIterations;
-        this.world.integrationParameters.maxPenetrationCorrection = this.physicsParams.maxPenetrationCorrection;
+        let params = this.world.integrationParameters;
+        params.numSolverIterations = this.physicsParams.solverIterations;
+        params.numAdditionalFrictionIterations = this.physicsParams.solverIterations;
+        this.world.integrationParameters = params;
     }
 
     rebuildRouletteBody() {

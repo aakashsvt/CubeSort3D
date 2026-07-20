@@ -4,8 +4,8 @@ import Experience from '../Experience.js'
 export const SYNTH_VOLUMES = {
     tap: 1.0,
     fall: 0.3,
-    collect: 0.3,   
-    binFilled: 0.2
+    collect: 0.15,   
+    binFilled: 0.1
 }
 
 export default class AudioManager {
