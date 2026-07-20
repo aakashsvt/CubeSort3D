@@ -42,17 +42,8 @@ export default class World
         if(!am) return
 
         if(this.resources.items.bgm) {
-            am.create('bgm', { buffer: this.resources.items.bgm, loop: true, volume: 0.5 })
+            am.create('bgm', { buffer: this.resources.items.bgm, loop: true, volume: 0.1 })
             am.play('bgm')
-        }
-        if(this.resources.items.cubeTap) {
-            am.create('cubeTap', { buffer: this.resources.items.cubeTap, loop: false, volume: 1.0 })
-        }
-        if(this.resources.items.cubeFall) {
-            am.create('cubeFall', { buffer: this.resources.items.cubeFall, loop: false, volume: 1.0 })
-        }
-        if(this.resources.items.binFilled) {
-            am.create('binFilled', { buffer: this.resources.items.binFilled, loop: false, volume: 1.0 })
         }
     }
 

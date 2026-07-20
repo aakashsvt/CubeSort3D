@@ -1,6 +1,13 @@
 import * as THREE from 'three'
 import Experience from '../Experience.js'
 
+export const SYNTH_VOLUMES = {
+    tap: 1.0,
+    fall: 0.3,
+    collect: 0.3,   
+    binFilled: 0.2
+}
+
 export default class AudioManager {
     constructor() { 
         this.experience = new Experience()
@@ -92,7 +99,7 @@ export default class AudioManager {
         osc.frequency.setValueAtTime(600, ctx.currentTime)
         osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.03)
 
-        gain.gain.setValueAtTime(1.0, ctx.currentTime)
+        gain.gain.setValueAtTime(SYNTH_VOLUMES.tap, ctx.currentTime)
         // Extremely fast decay for a solid, tight tap (50ms total)
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05)
 
@@ -115,7 +122,7 @@ export default class AudioManager {
         osc.frequency.setValueAtTime(400, ctx.currentTime)
         osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.05)
 
-        gain.gain.setValueAtTime(0.3, ctx.currentTime) // reduced volume
+        gain.gain.setValueAtTime(SYNTH_VOLUMES.fall, ctx.currentTime) // reduced volume
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05)
 
         osc.connect(gain)
@@ -137,7 +144,7 @@ export default class AudioManager {
         osc.frequency.setValueAtTime(400, ctx.currentTime)
         osc.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 0.08)
 
-        gain.gain.setValueAtTime(0.08, ctx.currentTime) // reduced volume
+        gain.gain.setValueAtTime(SYNTH_VOLUMES.collect, ctx.currentTime) // reduced volume
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08)
 
         osc.connect(gain)
@@ -158,7 +165,7 @@ export default class AudioManager {
         const gain1 = ctx.createGain()
         osc1.type = 'sine'
         osc1.frequency.setValueAtTime(900, now)
-        gain1.gain.setValueAtTime(0.6, now)
+        gain1.gain.setValueAtTime(SYNTH_VOLUMES.binFilled, now)
         gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.1)
         
         osc1.connect(gain1)
@@ -173,7 +180,7 @@ export default class AudioManager {
         osc2.frequency.setValueAtTime(1200, now + 0.1)
         
         gain2.gain.setValueAtTime(0, now)
-        gain2.gain.setValueAtTime(0.6, now + 0.1)
+        gain2.gain.setValueAtTime(SYNTH_VOLUMES.binFilled, now + 0.1)
         gain2.gain.exponentialRampToValueAtTime(0.01, now + 1.2)
         
         osc2.connect(gain2)
