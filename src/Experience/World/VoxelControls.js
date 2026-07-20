@@ -28,7 +28,7 @@ export default class VoxelControls {
             dampingFactor: 0.1
         }
         
-        this.staggerDelay = 20
+        this.staggerDelay = 10
         this.spawnGroups = []
         this.spawnTimer = 0
 

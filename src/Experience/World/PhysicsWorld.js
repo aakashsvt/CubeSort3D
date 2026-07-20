@@ -22,7 +22,8 @@ export default class PhysicsWorld {
             netHalfHeight: 3.0,
             netOffsetY: 0.12,
             ccdEnabled: false,
-            solverIterations: 4
+            solverIterations: 4,
+            maxPenetrationCorrection: 2.5 // Unity uses 2.5f by default
         }
         
         this.debugLines = null
@@ -75,6 +76,11 @@ export default class PhysicsWorld {
                     this.world.integrationParameters.numAdditionalFrictionIterations = v
                 }
             })
+            perfFolder.add(this.physicsParams, 'maxPenetrationCorrection').min(0.1).max(100.0).step(0.1).name('Max Depenetration').onChange((v) => {
+                if (this.world) {
+                    this.world.integrationParameters.maxPenetrationCorrection = v
+                }
+            })
         }
     }
 
@@ -87,6 +93,7 @@ export default class PhysicsWorld {
         // Setup iterations based on params
         this.world.integrationParameters.numSolverIterations = this.physicsParams.solverIterations;
         this.world.integrationParameters.numAdditionalFrictionIterations = this.physicsParams.solverIterations;
+        this.world.integrationParameters.maxPenetrationCorrection = this.physicsParams.maxPenetrationCorrection;
     }
 
     rebuildRouletteBody() {

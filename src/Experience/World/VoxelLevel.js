@@ -18,7 +18,7 @@ export default class VoxelLevel {
         this.container = new THREE.Group()
         this.container.scale.set(0.335, 0.335, 0.335)
         this.container.rotation.set(0, 0, 0)
-        this.spinGroup.add(this.container)
+        this.spinGroup.add(this.container)  
 
         // Model group handles the rotation from the JSON
         this.modelGroup = new THREE.Group()
