@@ -81,7 +81,7 @@ export default class VoxelLevel {
             duration: 1.2,
             startY: Math.PI * 2 * 0.75, // 0.75 turns (270 degrees)
             targetY: 0,
-            startScale: 0.001,
+            startScale: scale * 0.8,
             targetScale: scale
         }
         
