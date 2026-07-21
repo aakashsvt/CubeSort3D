@@ -186,40 +186,55 @@ export default class VoxelControls {
             })
 
             let groupQueue = []
-            for (const c of connected) {
-                c.active = false
-                this.voxelLevel.voxelGrid.remove(c.gridPos.x, c.gridPos.y, c.gridPos.z)
+            
+            const processCubes = (cubes) => {
+                for (const c of cubes) {
+                    c.active = false
+                    this.voxelLevel.voxelGrid.remove(c.gridPos.x, c.gridPos.y, c.gridPos.z)
 
-                if (this.physicsWorld) {
-                    const worldMatrix = new THREE.Matrix4()
-                    const position = new THREE.Vector3()
-                    const quaternion = new THREE.Quaternion()
-                    const scale = new THREE.Vector3()
+                    if (this.physicsWorld) {
+                        const worldMatrix = new THREE.Matrix4()
+                        const position = new THREE.Vector3()
+                        const quaternion = new THREE.Quaternion()
+                        const scale = new THREE.Vector3()
 
-                    this.voxelLevel.instancedMesh.getMatrixAt(c.instanceId, worldMatrix)
-                    worldMatrix.premultiply(this.voxelLevel.instancedMesh.matrixWorld)
-                    worldMatrix.decompose(position, quaternion, scale)
-                    
-                    const color = new THREE.Color()
-                    this.voxelLevel.instancedMesh.getColorAt(c.instanceId, color)
-                    const targetScale = 0.75
-                    // Ignore the dynamic slider scale (scale.x) and use the default base scale
-                    // so they always fall at the normal voxel size regardless of how zoomed in the group is.
-                    const defaultBaseScale = this.voxelLevel.baseScale || 0.335
-                    const visualScale = defaultBaseScale * targetScale
-                    const colliderSize = this.voxelLevel.cubeSize * defaultBaseScale * targetScale
+                        this.voxelLevel.instancedMesh.getMatrixAt(c.instanceId, worldMatrix)
+                        worldMatrix.premultiply(this.voxelLevel.instancedMesh.matrixWorld)
+                        worldMatrix.decompose(position, quaternion, scale)
+                        
+                        const color = new THREE.Color()
+                        this.voxelLevel.instancedMesh.getColorAt(c.instanceId, color)
+                        const targetScale = 0.75
+                        // Ignore the dynamic slider scale (scale.x) and use the default base scale
+                        // so they always fall at the normal voxel size regardless of how zoomed in the group is.
+                        const defaultBaseScale = this.voxelLevel.baseScale || 0.335
+                        const visualScale = defaultBaseScale * targetScale
+                        const colliderSize = this.voxelLevel.cubeSize * defaultBaseScale * targetScale
 
-                    groupQueue.push({
-                        instanceId: c.instanceId,
-                        position: position,
-                        quaternion: quaternion,
-                        color: color,
-                        visualScale: visualScale,
-                        colliderSize: colliderSize
-                    })
-                } else {
-                    this.voxelLevel.instancedMesh.setMatrixAt(c.instanceId, dummy.matrix)
+                        groupQueue.push({
+                            instanceId: c.instanceId,
+                            position: position,
+                            quaternion: quaternion,
+                            color: color,
+                            visualScale: visualScale,
+                            colliderSize: colliderSize
+                        })
+                    } else {
+                        this.voxelLevel.instancedMesh.setMatrixAt(c.instanceId, dummy.matrix)
+                    }
                 }
+            }
+
+            processCubes(connected)
+
+            const smallIslands = this.voxelLevel.voxelGrid.collectSmallAttachedIslands(8)
+            if (smallIslands.length > 0) {
+                smallIslands.sort((a, b) => {
+                    const distA = Math.abs(a.gridPos.x - cube.gridPos.x) + Math.abs(a.gridPos.y - cube.gridPos.y) + Math.abs(a.gridPos.z - cube.gridPos.z)
+                    const distB = Math.abs(b.gridPos.x - cube.gridPos.x) + Math.abs(b.gridPos.y - cube.gridPos.y) + Math.abs(b.gridPos.z - cube.gridPos.z)
+                    return distA - distB
+                })
+                processCubes(smallIslands)
             }
 
             if (groupQueue.length > 0) {

@@ -14,14 +14,15 @@ export default class FloodFillSelector {
 
         visited.add(this.grid._getKey(startX, startY, startZ))
 
-        const directions = [
-            { dx: 1, dy: 0, dz: 0 },
-            { dx: -1, dy: 0, dz: 0 },
-            { dx: 0, dy: 1, dz: 0 },
-            { dx: 0, dy: -1, dz: 0 },
-            { dx: 0, dy: 0, dz: 1 },
-            { dx: 0, dy: 0, dz: -1 }
-        ]
+        const directions = []
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dz = -1; dz <= 1; dz++) {
+                    if (dx === 0 && dy === 0 && dz === 0) continue
+                    directions.push({ dx, dy, dz })
+                }
+            }
+        }
 
         while (queue.length > 0) {
             const current = queue.shift()
