@@ -5,7 +5,7 @@ export const SYNTH_VOLUMES = {
     tap: 1.0,
     fall: 0.3,
     collect: 0.15,   
-    binFilled: 0.1
+    binFilled: 0.05
 }
 
 export default class AudioManager {
