@@ -68,6 +68,7 @@ export default class VoxelLevel {
         // Fallback to defaults if 'dashboard' is missing
         const dashboard = json.dashboard || {}
         this.cubeSize = dashboard.cubeSize || 1
+        this.cubeSpacing = dashboard.cubeSpacing || { x: this.cubeSize, y: this.cubeSize, z: this.cubeSize }
         const palette = dashboard.palette || []
 
         // Fallback to default scale if not specified in JSON
@@ -201,9 +202,9 @@ export default class VoxelLevel {
 
             // Set Position relative to the center
             dummy.position.set(
-                (x - centerX) * this.cubeSize,
-                (y - centerY) * this.cubeSize,
-                (centerZ - z) * this.cubeSize
+                (x - centerX) * this.cubeSpacing.x,
+                (y - centerY) * this.cubeSpacing.y,
+                (centerZ - z) * this.cubeSpacing.z
             )
             // Reverted to 1, as the scale is handled by the container
             dummy.scale.set(1, 1, 1)
