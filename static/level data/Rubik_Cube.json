@@ -36,7 +36,7 @@
     "binCapacitiesInput": "50",
     "autoSyncBinsToPalette": true,
     "coinReward": 100,
-    "trayCapacityCubes": 300,
+    "trayCapacityCubes": 500,
     "trayCapacityPercent": 0.2973240911960602,
     "dashboardDifficulty": 0.5,
     "maxColors": 8,
