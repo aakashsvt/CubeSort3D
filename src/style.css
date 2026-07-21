@@ -66,6 +66,8 @@ body.is-pc .webgl {
     align-items: center;
     gap: 10px;
     user-select: none;
+    transform: scale(0.95);
+    transform-origin: right center;
 }
 
 .tray-counter-circle {
