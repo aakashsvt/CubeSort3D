@@ -13,7 +13,7 @@ export default class BinManager {
             scale: 2.80,
             groupPosX: 0.00,
             groupPosY: -1.00,
-            groupPosZ: 2.90,
+            groupPosZ: 2.85,
             groupRotX: 0.27,
             groupRotY: 0.00,
             groupRotZ: 0.00,
@@ -30,7 +30,7 @@ export default class BinManager {
             shadowOpacity: 0.55,
             labelScale: 0.06,
             labelPosX: 0.0,
-            labelPosY: 0.23,
+            labelPosY: 0.26,
             labelPosZ: 0.3,
             customLabelOffsetX_0: 0.025,
             customLabelOffsetX_1: 0.01,
@@ -38,6 +38,12 @@ export default class BinManager {
             customLabelOffsetX_3: -0.02,
             customLabelOffsetX_4: 0.0,
             customLabelOffsetX_5: 0.0,
+            customLabelRotZ_0: -0.04,
+            customLabelRotZ_1: -0.02,
+            customLabelRotZ_2: 0.01,
+            customLabelRotZ_3: 0.04,
+            customLabelRotZ_4: 0.0,
+            customLabelRotZ_5: 0.0,
             customLabelOffsetY_Row0: -0.005,
             customLabelOffsetY_Row1: 0.01
         }
@@ -332,6 +338,14 @@ export default class BinManager {
             else if (item.rIndex === 4) customOffsetX = this.debugSettings.customLabelOffsetX_4
             else if (item.rIndex === 5) customOffsetX = this.debugSettings.customLabelOffsetX_5
 
+            let customRotZ = 0
+            if (item.rIndex === 0) customRotZ = this.debugSettings.customLabelRotZ_0
+            else if (item.rIndex === 1) customRotZ = this.debugSettings.customLabelRotZ_1
+            else if (item.rIndex === 2) customRotZ = this.debugSettings.customLabelRotZ_2
+            else if (item.rIndex === 3) customRotZ = this.debugSettings.customLabelRotZ_3
+            else if (item.rIndex === 4) customRotZ = this.debugSettings.customLabelRotZ_4
+            else if (item.rIndex === 5) customRotZ = this.debugSettings.customLabelRotZ_5
+
             let customOffsetY = 0
             if (item.queueIndex === 0) customOffsetY = this.debugSettings.customLabelOffsetY_Row0
             else if (item.queueIndex === 1) customOffsetY = this.debugSettings.customLabelOffsetY_Row1
@@ -340,6 +354,7 @@ export default class BinManager {
             item.colorBin.labelOffsetX = this.debugSettings.labelPosX + customOffsetX
             item.colorBin.labelOffsetY = this.debugSettings.labelPosY + customOffsetY
             item.colorBin.labelOffsetZ = this.debugSettings.labelPosZ
+            item.colorBin.labelRotZ = customRotZ
             // The canvas is 256x128 (2:1 aspect ratio), so we multiply X by 2
             item.colorBin.labelMesh.scale.set(this.debugSettings.labelScale * 2, this.debugSettings.labelScale, 1)
 
@@ -475,6 +490,14 @@ export default class BinManager {
 
         customFolder.add(this.debugSettings, 'customLabelOffsetY_Row0').min(-1).max(1).step(0.001).name('Row 0 Y').onChange(() => this.updateLayout())
         customFolder.add(this.debugSettings, 'customLabelOffsetY_Row1').min(-1).max(1).step(0.001).name('Row 1 Y').onChange(() => this.updateLayout())
+
+        const rotFolder = labelFolder.addFolder('Custom Column Rotations')
+        rotFolder.add(this.debugSettings, 'customLabelRotZ_0').min(-Math.PI).max(Math.PI).step(0.01).name('Column 0 Rot Z').onChange(() => this.updateLayout())
+        rotFolder.add(this.debugSettings, 'customLabelRotZ_1').min(-Math.PI).max(Math.PI).step(0.01).name('Column 1 Rot Z').onChange(() => this.updateLayout())
+        rotFolder.add(this.debugSettings, 'customLabelRotZ_2').min(-Math.PI).max(Math.PI).step(0.01).name('Column 2 Rot Z').onChange(() => this.updateLayout())
+        rotFolder.add(this.debugSettings, 'customLabelRotZ_3').min(-Math.PI).max(Math.PI).step(0.01).name('Column 3 Rot Z').onChange(() => this.updateLayout())
+        rotFolder.add(this.debugSettings, 'customLabelRotZ_4').min(-Math.PI).max(Math.PI).step(0.01).name('Column 4 Rot Z').onChange(() => this.updateLayout())
+        rotFolder.add(this.debugSettings, 'customLabelRotZ_5').min(-Math.PI).max(Math.PI).step(0.01).name('Column 5 Rot Z').onChange(() => this.updateLayout())
     }
 
     update(dt = 1 / 60) {
@@ -574,6 +597,7 @@ export default class BinManager {
                     item.colorBin.labelMesh.getWorldPosition(worldPos);
                     target.y = worldPos.y; 
                     item.colorBin.labelMesh.lookAt(target);
+                    item.colorBin.labelMesh.rotation.z = item.colorBin.labelRotZ || 0;
                 }
 
                 item.colorBin.updateMatrices();
