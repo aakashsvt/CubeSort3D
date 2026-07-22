@@ -32,13 +32,14 @@ export default class Roulette {
 
     setModel() {
         this.group = new THREE.Group()
-        this.group.position.set(0, -0.7, -1.8)
-        this.group.rotation.set(0.09, 0, 0)
-        this.group.scale.set(2.15, 2.15, 2.15)
+        this.group.position.set(0, -1.05, -1.40)
+        this.group.rotation.set(-0.05, 0, 0)
+        this.group.scale.set(2.05, 2.05, 2.05)
         this.scene.add(this.group)
 
         this.model = this.resource.scene
         this.model.position.set(0, 0, 0)
+        this.model.scale.set(1.00, 1.00, 1.00)
 
         this.model.traverse((child) => {
             if (child instanceof THREE.Mesh) {
@@ -142,7 +143,7 @@ export default class Roulette {
         if (this.debug.active) {
             this.debugFolder = this.debug.ui.addFolder('Roulette')
             
-            const scaleParams = { groupScale: 2.15, modelScale: 1 }
+            const scaleParams = { groupScale: 2.05, modelScale: 1.00 }
             this.debugFolder.add(scaleParams, 'groupScale').min(0.1).max(10).step(0.01).name('Group Scale').onChange((val) => {
                 this.group.scale.set(val, val, val)
             })

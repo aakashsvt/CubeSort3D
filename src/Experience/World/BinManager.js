@@ -10,15 +10,15 @@ export default class BinManager {
         this.debug = this.experience.debug
 
         this.debugSettings = {
-            scale: 2.6,
-            groupPosX: 0,
-            groupPosY: -1.0,
-            groupPosZ: 4.8,
-            groupRotX: 0.45,
-            groupRotY: 0,
-            groupRotZ: 0,
+            scale: 2.80,
+            groupPosX: 0.00,
+            groupPosY: -1.00,
+            groupPosZ: 2.90,
+            groupRotX: 0.27,
+            groupRotY: 0.00,
+            groupRotZ: 0.00,
             rowSpacing: 0.32,
-            queueSpacing: 0.45,
+            queueSpacing: 0.43,
             shadowX: 0,
             shadowY: 0.009,
             shadowZ: 0.005,
