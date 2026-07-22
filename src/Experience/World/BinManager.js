@@ -44,7 +44,7 @@ export default class BinManager {
             customLabelRotZ_3: 0.04,
             customLabelRotZ_4: 0.0,
             customLabelRotZ_5: 0.0,
-            customLabelOffsetY_Row0: -0.005,
+            customLabelOffsetY_Row0: -0.01,
             customLabelOffsetY_Row1: 0.01
         }
 
