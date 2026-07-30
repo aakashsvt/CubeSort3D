@@ -13,7 +13,7 @@ export default class BinManager {
             scale: 2.80,
             groupPosX: 0.00,
             groupPosY: -1.00,
-            groupPosZ: 2.85,
+            groupPosZ: 2.7,
             groupRotX: 0.27,
             groupRotY: 0.00,
             groupRotZ: 0.00,
