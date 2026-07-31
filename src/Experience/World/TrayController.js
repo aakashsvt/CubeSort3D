@@ -13,7 +13,6 @@ export default class TrayController {
         this.maxTrayCapacity = dashboard.trayCapacityCubes || 50;
 
         this.ui = new TrayUI();
-        this.ui.maxCountEl.innerText = this.maxTrayCapacity.toString();
     }
 
     update(dt, cubeManager) {
@@ -39,7 +38,6 @@ export default class TrayController {
                     if (this.failTimer >= this.overCapacityFailDelay) {
                         this.levelEnded = true;
                         console.log("[TrayController] Tray capacity exceeded. Level Failed.");
-                        this.ui.setWarningText('');
                         this.ui.showLevelFailedUI();
                     }
                 }
@@ -49,7 +47,6 @@ export default class TrayController {
                 this.failTimer = 0;
             }
 
-            this.ui.updateCounter(currentCount, this.maxTrayCapacity, this.overCapacityWarningStarted);
 
             if (cubeManager.roulette) {
                 const fillRatio = currentCount / this.maxTrayCapacity;
