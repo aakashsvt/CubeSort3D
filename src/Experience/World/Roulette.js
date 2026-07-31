@@ -24,6 +24,8 @@ export default class Roulette {
             posY: 0.4,
             posZ: 0.0
         }
+        
+        this.currentFillRatio = 0
 
         this.config = {
             colors: {
@@ -42,6 +44,10 @@ export default class Roulette {
                 centerBorder: 'Roulette_v3_Center_Border',
                 uiStrip: 'Roulette_v3_UIstrip',
                 materialV2: 'Roulette_v2'
+            },
+            animSpeed: {
+                base: 0.2, // Base speed of texture scrolling
+                multiplier: 0.8 // How much faster it scrolls as it fills
             }
         }
 
@@ -70,9 +76,27 @@ export default class Roulette {
             if (child.name === this.config.nodeNames.uiStrip) {
                 this.uiStripModel = child
                 if (child.material) {
-                    child.material.color.set(this.config.colors.normal)
+                    // Clone material and textures so we don't modify shared assets used by other parts
+                    child.material = child.material.clone()
+                    child.material.color.set(0x000000) // Force background to be black
                     child.material.emissive.set(this.config.colors.normal)
                     child.material.emissiveIntensity = 1.0
+
+                    if (child.material.map) {
+                        child.material.map = child.material.map.clone()
+                        child.material.map.wrapS = THREE.RepeatWrapping
+                        child.material.map.wrapT = THREE.RepeatWrapping
+                        child.material.map.needsUpdate = true
+                    }
+                    if (child.material.emissiveMap) {
+                        child.material.emissiveMap = child.material.emissiveMap.clone()
+                        child.material.emissiveMap.wrapS = THREE.RepeatWrapping
+                        child.material.emissiveMap.wrapT = THREE.RepeatWrapping
+                        child.material.emissiveMap.needsUpdate = true
+                    } else if (child.material.map) {
+                        // Use map as emissiveMap so the glow only applies to the texture's design, keeping background black
+                        child.material.emissiveMap = child.material.map
+                    }
                 }
             }
             if (child instanceof THREE.Mesh) {
@@ -182,12 +206,30 @@ export default class Roulette {
     }
 
     update() {
+        const dt = this.time.delta / 1000
         if (this.model) {
-            this.model.rotation.y += (this.time.delta / 1000) * this.speed
+            this.model.rotation.y += dt * this.speed
+        }
+
+        // Handle Blinking when at critical capacity
+        if (this.uiStripModel && this.uiStripModel.material) {
+            if (this.currentFillRatio >= this.config.thresholds.critical) {
+                // Create a Yoyo blink effect using time
+                const blink = (Math.sin(Date.now() / 150) + 1) / 2 // Ranges from 0 to 1
+
+                // Keep base background completely black
+                this.uiStripModel.material.color.set(0x000000)
+
+                // Alternate emissive glow between dark red and the critical color
+                const criticalColor = new THREE.Color(this.config.colors.critical)
+                const darkRed = new THREE.Color(0.25, 0, 0) // from C# blink logic
+                this.uiStripModel.material.emissive.lerpColors(darkRed, criticalColor, blink)
+            }
         }
     }
 
     updateLoadStatus(fillRatio) {
+        this.currentFillRatio = fillRatio
         if (this.uiStripModel && this.uiStripModel.material) {
             let colorHex = this.config.colors.normal
             let emissiveHex = this.config.colors.normal
@@ -200,8 +242,23 @@ export default class Roulette {
                 emissiveHex = this.config.colors.warning
             }
 
-            this.uiStripModel.material.color.set(colorHex)
-            this.uiStripModel.material.emissive.set(emissiveHex)
+            // Only snap to static colors if not blinking (blink logic overrides this in update)
+            if (fillRatio < this.config.thresholds.critical) {
+                // Keep background black, only color the texture via emissive
+                this.uiStripModel.material.color.set(0x000000)
+                this.uiStripModel.material.emissive.set(colorHex)
+            }
+
+            // Exact static offset mapping: 0.0 is empty, -0.5 is full (inverted for Three.js UV space)
+            const clampedFill = Math.min(Math.max(fillRatio, 0), 1)
+            const offsetX = - (clampedFill * 0.5)
+
+            if (this.uiStripModel.material.map) {
+                this.uiStripModel.material.map.offset.x = offsetX
+            }
+            if (this.uiStripModel.material.emissiveMap) {
+                this.uiStripModel.material.emissiveMap.offset.x = offsetX
+            }
         }
     }
 
