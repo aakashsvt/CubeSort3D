@@ -189,7 +189,7 @@ export default class Roulette {
             rotX: 0,
             rotY: 0,
             rotZ: 0,
-            scale: 0.6,
+            scale: 0.4,
             color: '#ffffff'
         }
 
