@@ -25,6 +25,26 @@ export default class Roulette {
             posZ: 0.0
         }
 
+        this.config = {
+            colors: {
+                normal: '#73c1ec',
+                warning: '#ff7300',
+                critical: '#ff0000',
+                criticalEmissive: '#bf0000',
+                wallDebug: 0xff0000,
+                coneDebug: 0x0000ff
+            },
+            thresholds: {
+                warning: 0.8,
+                critical: 1.0
+            },
+            nodeNames: {
+                centerBorder: 'Roulette_v3_Center_Border',
+                uiStrip: 'Roulette_v3_UIstrip',
+                materialV2: 'Roulette_v2'
+            }
+        }
+
         this.speed = 2
         this.setModel()
         this.setDebug()
@@ -42,13 +62,26 @@ export default class Roulette {
         this.model.scale.set(1.00, 1.00, 1.00)
 
         this.model.traverse((child) => {
+            if (child.name === this.config.nodeNames.centerBorder) {
+                if (child.material) {
+                    child.material.color.set(this.config.colors.normal)
+                }
+            }
+            if (child.name === this.config.nodeNames.uiStrip) {
+                this.uiStripModel = child
+                if (child.material) {
+                    child.material.color.set(this.config.colors.normal)
+                    child.material.emissive.set(this.config.colors.normal)
+                    child.material.emissiveIntensity = 1.0
+                }
+            }
             if (child instanceof THREE.Mesh) {
                 child.castShadow = true
                 child.receiveShadow = true
                 
                 if (child.material) {
-                    if (child.material.name === 'Roulette_v2') {
-                        child.material.color.set('#73c1ec')
+                    if (child.material.name === this.config.nodeNames.materialV2) {
+                        child.material.color.set(this.config.colors.normal)
                         child.material.roughness = 1
                     }
                 }
@@ -60,6 +93,9 @@ export default class Roulette {
         this.shadowModel.scale.set(0.99, 1, 1)
 
         this.shadowModel.traverse((child) => {
+            if (child.name === this.config.nodeNames.uiStrip) {
+                this.shadowUiStripModel = child
+            }
             if (child instanceof THREE.Mesh) {
                 child.castShadow = false
                 child.receiveShadow = true
@@ -75,6 +111,15 @@ export default class Roulette {
         this.group.add(this.shadowModel)
         this.group.add(this.model)
 
+        if (this.uiStripModel) {
+            this.group.attach(this.uiStripModel)
+            this.uiStripModel.position.z += 0.02
+        }
+        if (this.shadowUiStripModel) {
+            this.group.attach(this.shadowUiStripModel)
+            this.shadowUiStripModel.position.z += 0.02
+        }
+
         // Auto-calculate the exact outer radius of the Roulette model
         const localBox = new THREE.Box3()
         this.model.traverse(child => {
@@ -88,6 +133,10 @@ export default class Roulette {
         const size = localBox.getSize(new THREE.Vector3())
         this.modelCenter = localBox.getCenter(new THREE.Vector3())
         
+        this.setInvisibleColliders()
+    }
+
+    setInvisibleColliders() {
         this.coneParams.posX = this.modelCenter.x
         this.coneParams.posZ = this.modelCenter.z
         
@@ -95,7 +144,7 @@ export default class Roulette {
         this.wallParams.radius = 1.15
 
         this.wallMaterial = new THREE.MeshStandardMaterial({
-            color: 0xff0000,
+            color: this.config.colors.wallDebug,
             transparent: true,
             opacity: 0.0, // Invisible by default, but blocks cubes
             wireframe: true,
@@ -111,7 +160,7 @@ export default class Roulette {
         this.model.add(this.wallMesh)
 
         this.coneMaterial = new THREE.MeshStandardMaterial({
-            color: 0x0000ff,
+            color: this.config.colors.coneDebug,
             transparent: true,
             opacity: 0.0, // Invisible by default, deflects cubes
             wireframe: true
@@ -138,6 +187,24 @@ export default class Roulette {
         }
     }
 
+    updateLoadStatus(fillRatio) {
+        if (this.uiStripModel && this.uiStripModel.material) {
+            let colorHex = this.config.colors.normal
+            let emissiveHex = this.config.colors.normal
+
+            if (fillRatio >= this.config.thresholds.critical) {
+                colorHex = this.config.colors.critical
+                emissiveHex = this.config.colors.criticalEmissive
+            } else if (fillRatio >= this.config.thresholds.warning) {
+                colorHex = this.config.colors.warning
+                emissiveHex = this.config.colors.warning
+            }
+
+            this.uiStripModel.material.color.set(colorHex)
+            this.uiStripModel.material.emissive.set(emissiveHex)
+        }
+    }
+
     setDebug() {
         this.debug = this.experience.debug
         if (this.debug.active) {
@@ -154,6 +221,12 @@ export default class Roulette {
             this.debugFolder.add(this.group.position, 'y').min(-5).max(5).step(0.01).name('Group Pos Y')
             this.debugFolder.add(this.group.position, 'z').min(-5).max(5).step(0.01).name('Group Pos Z')
             this.debugFolder.add(this.group.rotation, 'x').min(-Math.PI).max(Math.PI).step(0.01).name('Group Rot X')
+            
+            if (this.uiStripModel) {
+                const uiFolder = this.debugFolder.addFolder('UI Strip')
+                uiFolder.add(this.uiStripModel.position, 'y').min(-2).max(2).step(0.001).name('Pos Y')
+                uiFolder.add(this.uiStripModel.position, 'z').min(-2).max(2).step(0.001).name('Pos Z')
+            }
             
             const wallFolder = this.debugFolder.addFolder('Invisible Wall')
             
