@@ -54,6 +54,7 @@ export default class TrayController {
             if (cubeManager.roulette) {
                 const fillRatio = currentCount / this.maxTrayCapacity;
                 cubeManager.roulette.updateLoadStatus(fillRatio);
+                cubeManager.roulette.updateText(currentCount, this.maxTrayCapacity);
             }
         }
     }

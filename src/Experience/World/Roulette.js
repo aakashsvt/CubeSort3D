@@ -127,7 +127,7 @@ export default class Roulette {
                     child.material.transparent = true
                     child.material.alphaTest = 0
                     child.material.opacity = 0.8
-                    child.material.needsUpdate = true
+                    child.material.needsUpdate = true 
                 }
             }
         })
@@ -158,6 +158,90 @@ export default class Roulette {
         this.modelCenter = localBox.getCenter(new THREE.Vector3())
         
         this.setInvisibleColliders()
+        this.createTextMesh()
+    }
+
+    createTextMesh() {
+        this.textCanvas = document.createElement('canvas')
+        this.textCanvas.width = 512
+        this.textCanvas.height = 256
+        this.textCtx = this.textCanvas.getContext('2d')
+        
+        this.textTexture = new THREE.CanvasTexture(this.textCanvas)
+        if (THREE.SRGBColorSpace) this.textTexture.colorSpace = THREE.SRGBColorSpace
+        
+        const geo = new THREE.PlaneGeometry(1.2, 0.6)
+        const mat = new THREE.MeshBasicMaterial({ 
+            map: this.textTexture, 
+            transparent: true,
+            depthTest: false,
+            side: THREE.DoubleSide
+        })
+        
+        this.textMesh = new THREE.Mesh(geo, mat)
+        this.textMesh.renderOrder = 999 // Ensure it renders on top of everything
+        
+        // Default fallback values
+        this.textParams = {
+            x: 0,
+            y: 0,
+            z: 0,
+            rotX: 0,
+            rotY: 0,
+            rotZ: 0,
+            scale: 0.6,
+            color: '#ffffff'
+        }
+
+        if (this.uiStripModel) {
+            // Automatically place it on the front edge of the UI strip geometry!
+            if (this.uiStripModel.geometry) {
+                this.uiStripModel.geometry.computeBoundingBox()
+                const box = this.uiStripModel.geometry.boundingBox
+                const center = new THREE.Vector3()
+                box.getCenter(center)
+                
+                this.textParams.x = center.x
+                this.textParams.y = center.y
+                // Local origin (0,0,0) is likely the hollow center of the ring.
+                // box.max.z finds the edge of the ring closest to the camera!
+                this.textParams.z = box.max.z + 0.02
+            }
+            this.uiStripModel.add(this.textMesh)
+        } else {
+            this.textParams.y = 1.2
+            this.group.add(this.textMesh)
+        }
+
+        this.textMesh.position.set(this.textParams.x, this.textParams.y, this.textParams.z)
+        this.textMesh.rotation.set(this.textParams.rotX, this.textParams.rotY, this.textParams.rotZ)
+        this.textMesh.scale.set(this.textParams.scale, this.textParams.scale, this.textParams.scale)
+        
+        // Render initial state
+        this.updateText(0, 50)
+    }
+
+    updateText(current, max) {
+        if (!this.textCtx) return
+        this.currentTextCount = current
+        this.currentTextMax = max
+
+        const ctx = this.textCtx
+        ctx.clearRect(0, 0, this.textCanvas.width, this.textCanvas.height)
+        
+        ctx.fillStyle = this.textParams ? this.textParams.color : '#ffffff'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)'
+        ctx.shadowBlur = 8
+        ctx.shadowOffsetX = 3
+        ctx.shadowOffsetY = 3
+        
+        ctx.font = 'bold 100px Arial'
+        ctx.fillText(`${current} / ${max}`, this.textCanvas.width / 2, this.textCanvas.height / 2)
+        
+        this.textTexture.needsUpdate = true
     }
 
     setInvisibleColliders() {
@@ -283,6 +367,24 @@ export default class Roulette {
                 const uiFolder = this.debugFolder.addFolder('UI Strip')
                 uiFolder.add(this.uiStripModel.position, 'y').min(-2).max(2).step(0.001).name('Pos Y')
                 uiFolder.add(this.uiStripModel.position, 'z').min(-2).max(2).step(0.001).name('Pos Z')
+            }
+
+            if (this.textMesh && this.textParams) {
+                const textFolder = this.debugFolder.addFolder('Canvas Text')
+                
+                textFolder.add(this.textParams, 'x').min(-30).max(30).step(0.001).name('Pos X').onChange(v => this.textMesh.position.x = v)
+                textFolder.add(this.textParams, 'y').min(-30).max(30).step(0.001).name('Pos Y').onChange(v => this.textMesh.position.y = v)
+                textFolder.add(this.textParams, 'z').min(-30).max(30).step(0.001).name('Pos Z').onChange(v => this.textMesh.position.z = v)
+                
+                textFolder.add(this.textParams, 'rotX').min(-Math.PI * 2).max(Math.PI * 2).step(0.01).name('Rot X').onChange(v => this.textMesh.rotation.x = v)
+                textFolder.add(this.textParams, 'rotY').min(-Math.PI * 2).max(Math.PI * 2).step(0.01).name('Rot Y').onChange(v => this.textMesh.rotation.y = v)
+                textFolder.add(this.textParams, 'rotZ').min(-Math.PI * 2).max(Math.PI * 2).step(0.01).name('Rot Z').onChange(v => this.textMesh.rotation.z = v)
+                
+                textFolder.add(this.textParams, 'scale').min(0.01).max(5).step(0.01).name('Scale').onChange(v => this.textMesh.scale.set(v, v, v))
+                
+                textFolder.addColor(this.textParams, 'color').name('Color').onChange(() => {
+                    this.updateText(this.currentTextCount || 0, this.currentTextMax || 50)
+                })
             }
             
             const wallFolder = this.debugFolder.addFolder('Invisible Wall')
