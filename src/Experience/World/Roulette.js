@@ -60,7 +60,7 @@ export default class Roulette {
         this.group = new THREE.Group()
         this.group.position.set(0, -1.05, -1.40)
         this.group.rotation.set(-0.1, 0, 0)
-        this.group.scale.set(2.05, 2.05, 2.05)
+        this.group.scale.set(2.0, 2.0, 2.0)
         this.scene.add(this.group)
 
         this.model = this.resource.scene
