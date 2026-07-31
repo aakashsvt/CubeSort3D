@@ -351,7 +351,7 @@ export default class Roulette {
         if (this.debug.active) {
             this.debugFolder = this.debug.ui.addFolder('Roulette')
             
-            const scaleParams = { groupScale: 2.05, modelScale: 1.00 }
+            const scaleParams = { groupScale: 2.0, modelScale: 1.00 }
             this.debugFolder.add(scaleParams, 'groupScale').min(0.1).max(10).step(0.01).name('Group Scale').onChange((val) => {
                 this.group.scale.set(val, val, val)
             })
