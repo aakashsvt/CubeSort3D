@@ -30,6 +30,8 @@ export default class CubeManager {
         if (this.dynamicInstancedMesh) return
 
         const dynMaterial = material.clone()
+        dynMaterial.roughness = 1
+        dynMaterial.metalness = 0
         dynMaterial.vertexColors = false
         this.dynamicInstancedMesh = new THREE.InstancedMesh(geometry, dynMaterial, maxCubes)
         this.dynamicInstancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
@@ -80,7 +82,7 @@ export default class CubeManager {
             binPos.applyMatrix4(this.binManager.binsGroup.matrixWorld)
             binPos.y += 0.5
 
-            return {
+            return { 
                 binPos: binPos,
                 binItem: item
             }

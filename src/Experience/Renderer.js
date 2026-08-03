@@ -22,8 +22,8 @@ export default class Renderer
             alpha: true,
             powerPreference: 'high-performance'
         })
-        this.instance.toneMapping = THREE.CineonToneMapping
-        this.instance.toneMappingExposure = 1.75
+        this.instance.toneMapping = THREE.NoToneMapping
+        this.instance.toneMappingExposure = 1
         this.instance.shadowMap.enabled = true
         this.instance.shadowMap.type = THREE.PCFShadowMap
         this.instance.setClearColor('#000000', 0)
