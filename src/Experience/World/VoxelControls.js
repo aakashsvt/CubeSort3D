@@ -29,6 +29,7 @@ export default class VoxelControls {
         }
         
         this.staggerDelay = 5
+        this.fallingCubeSize = 1.5
         this.spawnGroups = []
         this.spawnTimer = 0
 
@@ -45,6 +46,7 @@ export default class VoxelControls {
             this.debugFolder.add(this.touch, 'dampingFactor').min(0.01).max(1).step(0.01).name('dampingFactor')
             this.debugFolder.add(this, 'staggerDelay').min(0).max(200).step(1).name('Fall Stagger (ms)')
             this.debugFolder.add(this, 'waitForSettle').name('Wait For Settle')
+            this.debugFolder.add(this, 'fallingCubeSize').min(0.1).max(3.0).step(0.001).name('Falling Cube Size')
         }
     }
 
@@ -205,9 +207,9 @@ export default class VoxelControls {
                         const color = new THREE.Color()
                         this.voxelLevel.instancedMesh.getColorAt(c.instanceId, color)
                         const targetScale = 0.75
-                        // Ignore the dynamic slider scale (scale.x) and use the default base scale
-                        // so they always fall at the normal voxel size regardless of how zoomed in the group is.
-                        const defaultBaseScale = this.voxelLevel.baseScale || 0.335
+                        // Ignore the dynamic slider scale (scale.x) and use a fixed base scale
+                        // so they always fall at the normal level 1 voxel size regardless of level or zoom.
+                        const defaultBaseScale = this.fallingCubeSize // Adjustable via debug UI
                         const visualScale = defaultBaseScale * targetScale
                         const colliderSize = this.voxelLevel.cubeSize * defaultBaseScale * targetScale
 
