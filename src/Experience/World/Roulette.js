@@ -208,9 +208,9 @@ export default class Roulette {
         }
         
         // Apply explicitly requested fixed values
-        this.textParams.y = 0.04
+        this.textParams.y = 0.03
         this.textParams.z = 1.3
-        this.textParams.scale = 0.48
+        this.textParams.scale = 0.43
 
         this.textMesh.position.set(this.textParams.x, this.textParams.y, this.textParams.z)
         this.textMesh.rotation.set(this.textParams.rotX, this.textParams.rotY, this.textParams.rotZ)
