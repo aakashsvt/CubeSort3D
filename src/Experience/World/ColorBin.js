@@ -24,8 +24,8 @@ export default class ColorBin {
         this.shadowMatrix = new THREE.Matrix4()
 
         const canvas = document.createElement('canvas')
-        canvas.width = 256
-        canvas.height = 128
+        canvas.width = 512
+        canvas.height = 256
         this.canvasContext = canvas.getContext('2d')
         this.labelTexture = new THREE.CanvasTexture(canvas)
         
@@ -45,12 +45,21 @@ export default class ColorBin {
     updateLabelText() {
         const percent = Math.floor((this.currentCount / this.capacity) * 100)
         this.canvasContext.fillStyle = 'black'
-        this.canvasContext.fillRect(0, 0, 256, 128)
+        this.canvasContext.fillRect(0, 0, 512, 256)
         this.canvasContext.fillStyle = 'white'
-        this.canvasContext.font = '70px LilitaOne'
+        this.canvasContext.font = 'normal 150px "LilitaOne"'
         this.canvasContext.textAlign = 'center'
         this.canvasContext.textBaseline = 'middle'
-        this.canvasContext.fillText(`${percent}%`, 128, 64)
+        
+        const text = `${percent}%`
+        
+        // Visually thin the bold font by drawing a black outline over it
+        this.canvasContext.lineWidth = 8
+        this.canvasContext.strokeStyle = 'black'
+        this.canvasContext.strokeText(text, 256, 128)
+        
+        // Fill the white text
+        this.canvasContext.fillText(text, 256, 128)
         this.labelTexture.needsUpdate = true
     }
 

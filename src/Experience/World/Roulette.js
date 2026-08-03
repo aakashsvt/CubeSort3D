@@ -245,7 +245,7 @@ export default class Roulette {
         ctx.shadowOffsetX = 3
         ctx.shadowOffsetY = 3
         
-        ctx.font = '100px LilitaOne'
+        ctx.font = 'normal 100px "LilitaOne"'
         ctx.fillText(`${current} / ${max}`, this.textCanvas.width / 2, this.textCanvas.height / 2)
         
         this.textTexture.needsUpdate = true
