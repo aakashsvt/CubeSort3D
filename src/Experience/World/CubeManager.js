@@ -24,8 +24,6 @@ export default class CubeManager {
         this.routeBatchSize = 3
         this.colorRouteTimers = {}
         this.colorRouteBatchCounters = {}
-
-
     }
 
     setupDynamicMesh(geometry, material, maxCubes) {
