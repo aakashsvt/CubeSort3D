@@ -58,8 +58,8 @@ export default class Roulette {
 
     setModel() {
         this.group = new THREE.Group()
-        this.group.position.set(0, -1.05, -1.40)
-        this.group.rotation.set(-0.1, 0, 0)
+        this.group.position.set(0, -1.12, -1.40)
+        this.group.rotation.set(-0.14, 0, 0)
         this.group.scale.set(2.0, 2.0, 2.0)
         this.scene.add(this.group)
 
@@ -174,12 +174,11 @@ export default class Roulette {
         const mat = new THREE.MeshBasicMaterial({ 
             map: this.textTexture, 
             transparent: true,
-            depthTest: false,
+            depthTest: true,
             side: THREE.DoubleSide
         })
         
         this.textMesh = new THREE.Mesh(geo, mat)
-        this.textMesh.renderOrder = 999 // Ensure it renders on top of everything
         
         // Default fallback values
         this.textParams = {
@@ -202,16 +201,16 @@ export default class Roulette {
                 box.getCenter(center)
                 
                 this.textParams.x = center.x
-                this.textParams.y = 0.03
-                // Local origin (0,0,0) is likely the hollow center of the ring.
-                // box.max.z finds the edge of the ring closest to the camera!
-                this.textParams.z = box.max.z + 0.02
             }
             this.uiStripModel.add(this.textMesh)
         } else {
-            this.textParams.y = 0.03
             this.group.add(this.textMesh)
         }
+        
+        // Apply explicitly requested fixed values
+        this.textParams.y = 0.04
+        this.textParams.z = 1.3
+        this.textParams.scale = 0.48
 
         this.textMesh.position.set(this.textParams.x, this.textParams.y, this.textParams.z)
         this.textMesh.rotation.set(this.textParams.rotX, this.textParams.rotY, this.textParams.rotZ)
@@ -380,14 +379,14 @@ export default class Roulette {
                 const textFolder = this.debugFolder.addFolder('Canvas Text')
                 
                 textFolder.add(this.textParams, 'x').min(-30).max(30).step(0.001).name('Pos X').onChange(v => this.textMesh.position.x = v)
-                textFolder.add(this.textParams, 'y').min(-30).max(30).step(0.001).name('Pos Y').onChange(v => this.textMesh.position.y = v)
-                textFolder.add(this.textParams, 'z').min(-30).max(30).step(0.001).name('Pos Z').onChange(v => this.textMesh.position.z = v)
+                textFolder.add(this.textParams, 'y').min(-100).max(100).step(0.001).name('Pos Y').onChange(v => this.textMesh.position.y = v)
+                textFolder.add(this.textParams, 'z').min(-100).max(100).step(0.001).name('Pos Z').onChange(v => this.textMesh.position.z = v)
                 
                 textFolder.add(this.textParams, 'rotX').min(-Math.PI * 2).max(Math.PI * 2).step(0.01).name('Rot X').onChange(v => this.textMesh.rotation.x = v)
                 textFolder.add(this.textParams, 'rotY').min(-Math.PI * 2).max(Math.PI * 2).step(0.01).name('Rot Y').onChange(v => this.textMesh.rotation.y = v)
                 textFolder.add(this.textParams, 'rotZ').min(-Math.PI * 2).max(Math.PI * 2).step(0.01).name('Rot Z').onChange(v => this.textMesh.rotation.z = v)
                 
-                textFolder.add(this.textParams, 'scale').min(0.01).max(5).step(0.01).name('Scale').onChange(v => this.textMesh.scale.set(v, v, v))
+                textFolder.add(this.textParams, 'scale').min(-100).max(100).step(0.01).name('Scale').onChange(v => this.textMesh.scale.set(v, v, v))
                 
                 textFolder.addColor(this.textParams, 'color').name('Color').onChange(() => {
                     this.updateText(this.currentTextCount || 0, this.currentTextMax || 50)
