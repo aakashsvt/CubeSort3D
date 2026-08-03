@@ -219,6 +219,13 @@ export default class Roulette {
         
         // Render initial state
         this.updateText(0, 50)
+        
+        // Ensure text is re-rendered once the custom font has loaded
+        if (document.fonts) {
+            document.fonts.ready.then(() => {
+                this.updateText(this.currentTextCount || 0, this.currentTextMax || 50)
+            })
+        }
     }
 
     updateText(current, max) {
@@ -238,7 +245,7 @@ export default class Roulette {
         ctx.shadowOffsetX = 3
         ctx.shadowOffsetY = 3
         
-        ctx.font = 'bold 100px Arial'
+        ctx.font = '100px LilitaOne'
         ctx.fillText(`${current} / ${max}`, this.textCanvas.width / 2, this.textCanvas.height / 2)
         
         this.textTexture.needsUpdate = true

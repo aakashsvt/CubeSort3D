@@ -34,6 +34,12 @@ export default class ColorBin {
         this.labelMesh = new THREE.Mesh(geometry, material)
         
         this.updateLabelText()
+        
+        if (document.fonts) {
+            document.fonts.ready.then(() => {
+                this.updateLabelText()
+            })
+        }
     }
 
     updateLabelText() {
@@ -41,7 +47,7 @@ export default class ColorBin {
         this.canvasContext.fillStyle = 'black'
         this.canvasContext.fillRect(0, 0, 256, 128)
         this.canvasContext.fillStyle = 'white'
-        this.canvasContext.font = 'normal 70px Arial'
+        this.canvasContext.font = '70px LilitaOne'
         this.canvasContext.textAlign = 'center'
         this.canvasContext.textBaseline = 'middle'
         this.canvasContext.fillText(`${percent}%`, 128, 64)
