@@ -202,14 +202,14 @@ export default class Roulette {
                 box.getCenter(center)
                 
                 this.textParams.x = center.x
-                this.textParams.y = center.y
+                this.textParams.y = 0.03
                 // Local origin (0,0,0) is likely the hollow center of the ring.
                 // box.max.z finds the edge of the ring closest to the camera!
                 this.textParams.z = box.max.z + 0.02
             }
             this.uiStripModel.add(this.textMesh)
         } else {
-            this.textParams.y = 1.2
+            this.textParams.y = 0.03
             this.group.add(this.textMesh)
         }
 
