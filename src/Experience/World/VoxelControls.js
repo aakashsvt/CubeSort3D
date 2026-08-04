@@ -28,12 +28,20 @@ export default class VoxelControls {
             dampingFactor: 0.1
         }
         
-        this.staggerDelay = 5
+        this.staggerDelay = 3
         this.fallingCubeSize = 1.5
         this.spawnGroups = []
         this.spawnTimer = 0
 
         this.waitForSettle = false
+
+        this.popcornEffect = {
+            active: true,
+            minForce: 0.00035,
+            maxForce: 0.0028,
+            upwardBias: 1.5, // Kept this as 1.5 since it controls the angle (more UP than OUT), not the strength
+            spinMultiplier: 0.00035
+        }
 
         this.setDebug()
         this.setInteraction()
@@ -47,6 +55,13 @@ export default class VoxelControls {
             this.debugFolder.add(this, 'staggerDelay').min(0).max(200).step(1).name('Fall Stagger (ms)')
             this.debugFolder.add(this, 'waitForSettle').name('Wait For Settle')
             this.debugFolder.add(this, 'fallingCubeSize').min(0.1).max(3.0).step(0.001).name('Falling Cube Size')
+
+            const popcornFolder = this.debugFolder.addFolder('Popcorn Effect')
+            popcornFolder.add(this.popcornEffect, 'active').name('Enable Popcorn')
+            popcornFolder.add(this.popcornEffect, 'minForce').min(0).max(5).step(0.01).name('Min Force')
+            popcornFolder.add(this.popcornEffect, 'maxForce').min(0).max(5).step(0.01).name('Max Force')
+            popcornFolder.add(this.popcornEffect, 'upwardBias').min(0).max(5).step(0.1).name('Upward Bias')
+            popcornFolder.add(this.popcornEffect, 'spinMultiplier').min(0).max(2).step(0.01).name('Spin Multiplier')
         }
     }
 
@@ -285,6 +300,38 @@ export default class VoxelControls {
                         this.voxelLevel.instancedMesh.instanceMatrix.needsUpdate = true
                         
                         const body = this.physicsWorld.createCubeBody(item.position, item.quaternion, item.colliderSize)
+                        
+                        if (this.popcornEffect.active && body) {
+                            // Mimic Unity's burst: horizontal random with upward bias
+                            const angle = Math.random() * Math.PI * 2;
+                            const hx = Math.cos(angle);
+                            const hz = Math.sin(angle);
+                            
+                            // Normalize direction
+                            const length = Math.sqrt(hx * hx + this.popcornEffect.upwardBias * this.popcornEffect.upwardBias + hz * hz);
+                            const dirX = hx / length;
+                            const dirY = this.popcornEffect.upwardBias / length;
+                            const dirZ = hz / length;
+                            
+                            const force = this.popcornEffect.minForce + Math.random() * (this.popcornEffect.maxForce - this.popcornEffect.minForce);
+                            
+                            // Apply linear impulse
+                            body.applyImpulse({ x: dirX * force, y: dirY * force, z: dirZ * force }, true);
+                            
+                            // Random torque (spin)
+                            const spinX = (Math.random() - 0.5) * 2;
+                            const spinY = (Math.random() - 0.5) * 2;
+                            const spinZ = (Math.random() - 0.5) * 2;
+                            
+                            const spinLen = Math.sqrt(spinX*spinX + spinY*spinY + spinZ*spinZ);
+                            const sForce = force * this.popcornEffect.spinMultiplier;
+                            body.applyTorqueImpulse({
+                                x: (spinX / spinLen) * sForce,
+                                y: (spinY / spinLen) * sForce,
+                                z: (spinZ / spinLen) * sForce
+                            }, true);
+                        }
+
                         this.cubeManager.spawnCube(item.color, item.visualScale, body)
                     }
 
