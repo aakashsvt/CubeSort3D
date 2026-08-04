@@ -159,31 +159,43 @@ export default class CubeManager {
                 const linvel = item.body.linvel()
                 const speed = Math.sqrt(linvel.x * linvel.x + linvel.y * linvel.y + linvel.z * linvel.z)
 
-                // Only count time toward hard timeout when cube is near the tray, not mid-air
-                if (translation.y < 1.0) {
+                const isNearTray = translation.y < 3.0; // Tray and piles rarely exceed Y=2.5
+
+                if (isNearTray) {
                     item.timeAlive = (item.timeAlive || 0) + dt
                 }
 
                 // Track how long the cube has been continuously still.
-                // At the peak of a bounce, speed is zero for only 1 frame — not enough.
-                // On a surface, speed stays low for many frames — that's a real settle.
                 if (speed < 1.5) {
-                    item.settledTime = (item.settledTime || 0) + dt
-                    
-                    if (translation.y < 1.0 && !item.hasPlayedImpactSound) {
-                        item.hasPlayedImpactSound = true
-                        if (this.experience && this.experience.audioManager) {
-                            this.experience.audioManager.playSynthFall()
+                    if (isNearTray) {
+                        item.settledTime = (item.settledTime || 0) + dt
+                        
+                        if (!item.hasPlayedImpactSound) {
+                            item.hasPlayedImpactSound = true
+                            if (this.experience && this.experience.audioManager) {
+                                this.experience.audioManager.playSynthFall()
+                            }
+                        }
+                    } else {
+                        // Stuck in mid-air (jammed in the model or bridged)
+                        item.stuckInAirTime = (item.stuckInAirTime || 0) + dt
+                        if (item.stuckInAirTime > 0.2) {
+                            // Jiggle it to break the jam!
+                            item.body.applyImpulse({ 
+                                x: (Math.random() - 0.5) * 5, 
+                                y: -10, 
+                                z: (Math.random() - 0.5) * 5 
+                            }, true)
+                            item.stuckInAirTime = 0
                         }
                     }
                 } else {
                     item.settledTime = 0
+                    item.stuckInAirTime = 0
                 }
 
-                // Kill physics when EITHER:
-                // 1. Cube has been still for 0.15s straight (natural settle), OR
-                // 2. Hard timeout of 1.5s near the tray (safety net — prevents floating forever)
-                const hasSettled = item.settledTime > 0.15 || (item.timeAlive || 0) > 1.5
+                // Kill physics ONLY if it is near the tray AND has been still (or timed out)
+                const hasSettled = isNearTray && (item.settledTime > 0.15 || (item.timeAlive || 0) > 1.5)
 
                 if (hasSettled) {
                     // === INSTANT KILL + FLAT SNAP + MATRIX PARENT ===
