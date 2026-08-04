@@ -20,6 +20,12 @@ export default class LevelManager {
                 }
             }
         }
+        
+        // Sync the HTML UI with the actual starting level immediately
+        const levelHeading = document.querySelector('.top-bar h1');
+        if (levelHeading) {
+            levelHeading.innerText = `LEVEL ${this.currentLevelIndex + 1}`;
+        }
     }
 
     update() {
