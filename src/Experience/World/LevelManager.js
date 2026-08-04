@@ -9,6 +9,17 @@ export default class LevelManager {
         
         this.levels = LEVELS;
         this.currentLevelIndex = 0;
+
+        // Sync the current level index with what was actually loaded on startup via sources.js
+        if (this.experience.resources.sources) {
+            const levelDataSource = this.experience.resources.sources.find(s => s.name === 'levelData');
+            if (levelDataSource) {
+                const initialIndex = this.levels.indexOf(levelDataSource.path);
+                if (initialIndex !== -1) {
+                    this.currentLevelIndex = initialIndex;
+                }
+            }
+        }
     }
 
     update() {
