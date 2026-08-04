@@ -18,7 +18,10 @@ export default class TrayUI {
         const retryBtn = document.createElement('button');
         retryBtn.className = 'level-fail-retry-btn';
         retryBtn.innerText = 'RETRY';
+        let isRetryClicked = false;
         retryBtn.onclick = () => {
+            if (isRetryClicked) return;
+            isRetryClicked = true;
             if (window.experience && window.experience.world && window.experience.world.levelManager) {
                 window.experience.world.levelManager.retryLevel();
             }
@@ -53,7 +56,10 @@ export default class TrayUI {
         const nextBtn = document.createElement('button');
         nextBtn.className = 'level-complete-next-btn';
         nextBtn.innerText = 'NEXT LEVEL';
+        let isNextClicked = false;
         nextBtn.onclick = () => {
+            if (isNextClicked) return;
+            isNextClicked = true;
             if (window.experience && window.experience.world && window.experience.world.levelManager) {
                 window.experience.world.levelManager.loadNextLevel();
             }
