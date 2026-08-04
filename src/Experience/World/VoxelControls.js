@@ -207,9 +207,10 @@ export default class VoxelControls {
                         const color = new THREE.Color()
                         this.voxelLevel.instancedMesh.getColorAt(c.instanceId, color)
                         const targetScale = 0.75
-                        // Ignore the dynamic slider scale (scale.x) and use a fixed base scale
-                        // so they always fall at the normal level 1 voxel size regardless of level or zoom.
-                        const defaultBaseScale = this.fallingCubeSize // Adjustable via debug UI
+                        // The user wants a constant absolute size across all levels.
+                        // We use Level 1's cubeSize (0.08) as the reference point for the debug slider.
+                        const targetAbsoluteSize = 0.08 * this.fallingCubeSize; 
+                        const defaultBaseScale = targetAbsoluteSize / this.voxelLevel.cubeSize;
                         const visualScale = defaultBaseScale * targetScale
                         const colliderSize = this.voxelLevel.cubeSize * defaultBaseScale * targetScale
 
