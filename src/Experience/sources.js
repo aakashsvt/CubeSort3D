@@ -4,7 +4,7 @@ export default [
     {
         name: 'levelData',
         type: 'json',
-        path: LEVELS[0]
+        path: LEVELS[1]
     },
     {
         name: 'rouletteModel',
