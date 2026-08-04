@@ -170,6 +170,49 @@ export default class PhysicsWorld {
                 scaleMatrix.multiply(matrix)
                 geometry.applyMatrix4(scaleMatrix)
 
+                if (child.name === 'InvisibleWall') {
+                    geometry.computeBoundingBox()
+                    const bbox = geometry.boundingBox
+                    
+                    const radiusX = (bbox.max.x - bbox.min.x) / 2
+                    const radiusZ = (bbox.max.z - bbox.min.z) / 2
+                    const radius = Math.max(radiusX, radiusZ)
+                    const height = bbox.max.y - bbox.min.y
+                    
+                    const cy = (bbox.max.y + bbox.min.y) / 2
+                    const cx = (bbox.max.x + bbox.min.x) / 2
+                    const cz = (bbox.max.z + bbox.min.z) / 2
+                    
+                    const segments = 16
+                    const thickness = 4.0 // Super thick to guarantee no tunneling
+                    const angleStep = (Math.PI * 2) / segments
+                    
+                    for (let i = 0; i < segments; i++) {
+                        const angle = i * angleStep
+                        // Place center so inner edge is exactly at the original radius
+                        const centerDist = radius + (thickness / 2)
+                        const px = cx + Math.cos(angle) * centerDist
+                        const pz = cz + Math.sin(angle) * centerDist
+                        
+                        const width = (Math.PI * 2 * centerDist) / segments
+                        // Rapier uses half-extents
+                        let desc = RAPIER.ColliderDesc.cuboid(width / 2 + 0.1, height / 2, thickness / 2)
+                        desc.setTranslation(px, cy, pz)
+                        
+                        // Z is the thickness axis. Unrotated Z points to (0,0,1).
+                        // We want it to point towards the center.
+                        const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -angle - Math.PI/2)
+                        desc.setRotation(q)
+                        
+                        desc.setFriction(0.0) // Slippery wall
+                        desc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min)
+                        desc.setRestitution(0.1)
+                        
+                        this.world.createCollider(desc, this.rouletteBody)
+                    }
+                    return // Done with InvisibleWall
+                }
+
                 const positionAttribute = geometry.attributes.position
                 let vertices = positionAttribute.array
                 
@@ -187,13 +230,8 @@ export default class PhysicsWorld {
                 let colliderDesc = RAPIER.ColliderDesc.trimesh(verticesFloat32, indicesUint32)
                 colliderDesc.setRestitution(0.1)
                 
-                if (child.name === 'InvisibleWall') {
-                    colliderDesc.setFriction(0.0) // Slippery wall
-                    colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min) // Force 0 friction!
-                } else {
-                    colliderDesc.setFriction(0.3) // Low friction — enough to settle on tilt, not enough to fling outward
-                    colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Average)
-                }
+                colliderDesc.setFriction(0.3) // Low friction — enough to settle on tilt, not enough to fling outward
+                colliderDesc.setFrictionCombineRule(RAPIER.CoefficientCombineRule.Average)
                 
                 this.world.createCollider(colliderDesc, this.rouletteBody)
             }
