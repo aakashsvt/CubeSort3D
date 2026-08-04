@@ -177,9 +177,12 @@ export default class PhysicsWorld {
                     const radiusX = (bbox.max.x - bbox.min.x) / 2
                     const radiusZ = (bbox.max.z - bbox.min.z) / 2
                     const radius = Math.max(radiusX, radiusZ)
-                    const height = bbox.max.y - bbox.min.y
+                    const originalHeight = bbox.max.y - bbox.min.y
+                    const heightExtension = 50.0 // Extend the wall far upwards
+                    const height = originalHeight + heightExtension
                     
-                    const cy = (bbox.max.y + bbox.min.y) / 2
+                    // Shift the center Y upwards by half the extension amount so the bottom stays in place
+                    const cy = ((bbox.max.y + bbox.min.y) / 2) + (heightExtension / 2)
                     const cx = (bbox.max.x + bbox.min.x) / 2
                     const cz = (bbox.max.z + bbox.min.z) / 2
                     
