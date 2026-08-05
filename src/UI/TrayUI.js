@@ -22,8 +22,13 @@ export default class TrayUI {
         retryBtn.onclick = () => {
             if (isRetryClicked) return;
             isRetryClicked = true;
+            retryBtn.innerText = 'LOADING...';
+            retryBtn.style.opacity = '0.7';
+            retryBtn.style.cursor = 'wait';
             if (window.experience && window.experience.world && window.experience.world.levelManager) {
-                window.experience.world.levelManager.retryLevel();
+                setTimeout(() => {
+                    window.experience.world.levelManager.retryLevel();
+                }, 50);
             }
         };
         
@@ -60,8 +65,13 @@ export default class TrayUI {
         nextBtn.onclick = () => {
             if (isNextClicked) return;
             isNextClicked = true;
+            nextBtn.innerText = 'LOADING...';
+            nextBtn.style.opacity = '0.7';
+            nextBtn.style.cursor = 'wait';
             if (window.experience && window.experience.world && window.experience.world.levelManager) {
-                window.experience.world.levelManager.loadNextLevel();
+                setTimeout(() => {
+                    window.experience.world.levelManager.loadNextLevel();
+                }, 50);
             }
         };
         
