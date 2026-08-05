@@ -39,6 +39,17 @@ export default class LevelManager {
             if (noActiveCubes && noSpawningCubes && noTrayCubes) {
                 this.world.trayController.levelEnded = true;
                 console.log("Player wins!");
+                
+                this.binsAnimatingOut = true;
+                if (this.world.binManager) {
+                    this.world.binManager.animateOutAllBins();
+                }
+            }
+        }
+        
+        if (this.binsAnimatingOut && this.world.binManager) {
+            if (this.world.binManager.spawnedBins.length === 0 && this.world.binManager.exitingBins.length === 0) {
+                this.binsAnimatingOut = false;
                 this.world.trayController.ui.showLevelCompleteUI(this.currentLevelIndex + 1);
             }
         }
@@ -66,6 +77,7 @@ export default class LevelManager {
 
     resetLevel(newLevelData) {
         this.experience.resources.items.levelData = newLevelData;
+        this.binsAnimatingOut = false;
 
         // 1. Clear Voxel Controls
         this.world.voxelControls.spawnGroups = [];

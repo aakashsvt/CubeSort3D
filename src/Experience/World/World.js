@@ -49,17 +49,19 @@ export default class World
 
     update()
     {
+        const dt = this.experience.time.delta / 1000 // Convert ms to seconds
+        
+        if(this.binManager) this.binManager.update(dt)
+        if(this.levelManager) this.levelManager.update()
+
         // Pause the entire game state if the level is failed/ended
         if (this.trayController && this.trayController.levelEnded) return;
 
-        const dt = this.experience.time.delta / 1000 // Convert ms to seconds
         if(this.physicsWorld) this.physicsWorld.update()
-        if(this.binManager) this.binManager.update(dt)
         if(this.cubeManager) this.cubeManager.update(dt)
         if(this.trayController) this.trayController.update(dt, this.cubeManager)
         if(this.voxelLevel) this.voxelLevel.update?.()
         if(this.voxelControls) this.voxelControls.update()
         if(this.roulette) this.roulette.update()
-        if(this.levelManager) this.levelManager.update()
     }
 }

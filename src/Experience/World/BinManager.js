@@ -396,6 +396,21 @@ export default class BinManager {
         if (this.internalCubeInstancedMesh) this.internalCubeInstancedMesh.instanceMatrix.needsUpdate = true
     }
 
+    animateOutAllBins() {
+        if (!this.spawnedBins || this.spawnedBins.length === 0) return;
+        
+        while (this.spawnedBins.length > 0) {
+            const exitingItem = this.spawnedBins.pop();
+            exitingItem.exitPhase = -1; // Start with 200ms wait phase
+            exitingItem.exitTimer = 0;
+            exitingItem.startX = exitingItem.colorBin.position.x;
+            exitingItem.startY = exitingItem.colorBin.position.y;
+            exitingItem.startZ = exitingItem.colorBin.position.z;
+            this.exitingBins.push(exitingItem);
+        }
+    }
+
+
     getBinItemForColorHex(colorHex) {
         if (!this.roundRobinIndices) {
             this.roundRobinIndices = {}
