@@ -2,19 +2,27 @@ export default class LoadingScreen {
     constructor(experience) {
         this.experience = experience;
         
-        // Create HTML elements
-        this.container = document.createElement('div');
-        this.container.classList.add('loading-screen');
+        // Find existing HTML elements from index.html
+        this.container = document.querySelector('.loading-screen');
+        if (!this.container) {
+            this.container = document.createElement('div');
+            this.container.classList.add('loading-screen');
+            document.body.appendChild(this.container);
+        }
         
-        this.barContainer = document.createElement('div');
-        this.barContainer.classList.add('loading-bar-container');
+        this.barContainer = this.container.querySelector('.loading-bar-container');
+        if (!this.barContainer) {
+            this.barContainer = document.createElement('div');
+            this.barContainer.classList.add('loading-bar-container');
+            this.container.appendChild(this.barContainer);
+        }
         
-        this.bar = document.createElement('div');
-        this.bar.classList.add('loading-bar');
-        
-        this.barContainer.appendChild(this.bar);
-        this.container.appendChild(this.barContainer);
-        document.body.appendChild(this.container);
+        this.bar = this.container.querySelector('.loading-bar');
+        if (!this.bar) {
+            this.bar = document.createElement('div');
+            this.bar.classList.add('loading-bar');
+            this.barContainer.appendChild(this.bar);
+        }
         
         // Initialize bar width based on current progress
         this.updateBar();
