@@ -414,6 +414,7 @@ export default class BinManager {
     getBinItemForColorHex(colorHex) {
         if (!this.roundRobinIndices) {
             this.roundRobinIndices = {}
+            this.roundRobinBatchCounters = {}
         }
 
         const validItems = []
@@ -429,12 +430,21 @@ export default class BinManager {
         if (validItems.length === 0) return null
 
         let lastIndex = this.roundRobinIndices[colorHex]
-        if (lastIndex === undefined) {
-            lastIndex = -1
+        if (lastIndex === undefined || lastIndex >= validItems.length) {
+            lastIndex = 0
+            this.roundRobinBatchCounters[colorHex] = 0
         }
 
-        lastIndex = (lastIndex + 1) % validItems.length
-        this.roundRobinIndices[colorHex] = lastIndex
+        let counter = this.roundRobinBatchCounters[colorHex] || 0;
+        const batchSize = (this.experience.world && this.experience.world.cubeManager) ? this.experience.world.cubeManager.routeBatchSize : 3;
+
+        if (counter >= batchSize) {
+            lastIndex = (lastIndex + 1) % validItems.length;
+            counter = 0;
+        }
+
+        this.roundRobinIndices[colorHex] = lastIndex;
+        this.roundRobinBatchCounters[colorHex] = counter + 1;
 
         return validItems[lastIndex]
     }
