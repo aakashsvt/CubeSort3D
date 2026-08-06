@@ -58,6 +58,7 @@ export default class BinManager {
     }
 
     configureBins() {
+        this.isBoardCleared = false;
         const levelData = this.resources.items.levelData
         const dashboard = levelData.dashboard || {}
 
@@ -301,17 +302,50 @@ export default class BinManager {
         this.updateLayout(true) // Initialize layout
     }
 
-    advanceQueue(rIndex) {
-        const index = this.spawnedBins.findIndex(i => i.rIndex === rIndex && i.queueIndex === 0)
-        if (index !== -1) {
-            const exitingItem = this.spawnedBins.splice(index, 1)[0]
-            exitingItem.exitPhase = -1 // Start with 200ms wait phase
-            exitingItem.exitTimer = 0
-            exitingItem.startX = exitingItem.colorBin.position.x
-            exitingItem.startY = exitingItem.colorBin.position.y
-            exitingItem.startZ = exitingItem.colorBin.position.z
-            exitingItem.advancingRowIndex = rIndex // Store which row to advance later
-            this.exitingBins.push(exitingItem)
+    advanceQueue(binItem) {
+        binItem.readyToExit = true;
+        this.tryAdvanceRow(binItem.rIndex);
+    }
+
+    tryAdvanceRow(rIndex) {
+        const queueForRow = this.spawnedBins.filter(i => i.rIndex === rIndex).sort((a, b) => a.queueIndex - b.queueIndex);
+        if (queueForRow.length === 0) return;
+
+        const concurrentLimit = this.isBoardCleared ? 2 : 1;
+        const expectedCount = Math.min(queueForRow.length, concurrentLimit);
+        
+        const readyBins = [];
+        for (let i = 0; i < expectedCount; i++) {
+            if (queueForRow[i].readyToExit) {
+                readyBins.push(queueForRow[i]);
+            } else {
+                break;
+            }
+        }
+
+        if (readyBins.length >= expectedCount && readyBins.length > 0) {
+            for (let i = 0; i < readyBins.length; i++) {
+                const exitingItem = readyBins[i];
+                const index = this.spawnedBins.indexOf(exitingItem);
+                if (index !== -1) {
+                    this.spawnedBins.splice(index, 1);
+                }
+                exitingItem.exitPhase = -1; // Start with 200ms wait phase
+                exitingItem.exitTimer = 0;
+                exitingItem.startX = exitingItem.colorBin.position.x;
+                exitingItem.startY = exitingItem.colorBin.position.y;
+                exitingItem.startZ = exitingItem.colorBin.position.z;
+                
+                if (i === 0) {
+                    exitingItem.advancingRowIndex = rIndex; 
+                    exitingItem.advanceCount = readyBins.length;
+                } else {
+                    exitingItem.advancingRowIndex = undefined;
+                    exitingItem.advanceCount = 0;
+                }
+                
+                this.exitingBins.push(exitingItem);
+            }
         }
     }
 
@@ -418,9 +452,10 @@ export default class BinManager {
         }
 
         const validItems = []
+        const concurrentLimit = this.isBoardCleared ? 2 : 1;
 
         for (const item of this.spawnedBins) {
-            if (item.queueIndex === 0 &&
+            if (item.queueIndex < concurrentLimit &&
                 item.colorBin.color.getHex() === colorHex &&
                 item.colorBin.assignedCount < item.colorBin.capacity) {
                 validItems.push(item)
@@ -571,12 +606,14 @@ export default class BinManager {
                     
                     // Advance the remaining bins in this row now that the filled bin is moving out
                     if (item.advancingRowIndex !== undefined) {
+                        const count = item.advanceCount || 1;
                         for (const spawnedItem of this.spawnedBins) {
                             if (spawnedItem.rIndex === item.advancingRowIndex) {
-                                spawnedItem.queueIndex--;
+                                spawnedItem.queueIndex -= count;
                             }
                         }
                         this.updateLayout();
+                        this.tryAdvanceRow(item.advancingRowIndex);
                         item.advancingRowIndex = undefined;
                     }
                 }

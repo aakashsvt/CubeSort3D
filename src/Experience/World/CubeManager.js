@@ -141,7 +141,7 @@ export default class CubeManager {
                             if (this.experience && this.experience.audioManager) {
                                 this.experience.audioManager.playSynthBinFilled()
                             }
-                            this.binManager.advanceQueue(binItem.rIndex)
+                            this.binManager.advanceQueue(binItem)
                         }
                     }
 

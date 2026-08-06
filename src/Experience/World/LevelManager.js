@@ -36,6 +36,10 @@ export default class LevelManager {
             const noSpawningCubes = this.world.voxelControls.spawnGroups.length === 0;
             const noTrayCubes = this.world.cubeManager.getActiveTrayCubeCount() === 0;
             
+            if (this.world.binManager) {
+                this.world.binManager.isBoardCleared = (noActiveCubes && noSpawningCubes);
+            }
+
             if (noActiveCubes && noSpawningCubes && noTrayCubes) {
                 this.world.trayController.levelEnded = true;
                 console.log("Player wins!");
