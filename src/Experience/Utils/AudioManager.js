@@ -5,7 +5,7 @@ export const SYNTH_VOLUMES = {
     tap: 1.0,
     fall: 0.3,
     collect: 0.15,   
-    binFilled: 0.05
+    binFilled: 0.5
 }
 
 export default class AudioManager {
@@ -159,49 +159,34 @@ export default class AudioManager {
         if (ctx.state !== 'running') return
 
         const now = ctx.currentTime
-
-        // "Ti" - short first note
-        const osc1 = ctx.createOscillator()
-        const gain1 = ctx.createGain()
-        osc1.type = 'sine'
-        osc1.frequency.setValueAtTime(900, now)
-        gain1.gain.setValueAtTime(SYNTH_VOLUMES.binFilled, now)
-        gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.1)
         
-        osc1.connect(gain1)
-        gain1.connect(this.listener.getInput())
-        osc1.start(now)
-        osc1.stop(now + 0.15)
-
-        // "Dingggggg" - higher second note that rings out
-        const osc2 = ctx.createOscillator()
-        const gain2 = ctx.createGain()
-        osc2.type = 'sine'
-        osc2.frequency.setValueAtTime(1200, now + 0.1)
+        // A very satisfying, bright "magical" major arpeggio
+        const notes = [523.25, 659.25, 783.99, 1046.50] // C5, E5, G5, C6 (Major Chord)
+        const noteDuration = 0.035 // Very fast roll
         
-        gain2.gain.setValueAtTime(0, now)
-        gain2.gain.setValueAtTime(SYNTH_VOLUMES.binFilled, now + 0.1)
-        gain2.gain.exponentialRampToValueAtTime(0.01, now + 1.2)
-        
-        osc2.connect(gain2)
-        gain2.connect(this.listener.getInput())
-        osc2.start(now + 0.1)
-        osc2.stop(now + 1.2)
-
-        // Add a faint high-pitched metallic overtone for the "ding"
-        const osc3 = ctx.createOscillator()
-        const gain3 = ctx.createGain()
-        osc3.type = 'triangle'
-        osc3.frequency.setValueAtTime(2400, now + 0.1)
-        
-        gain3.gain.setValueAtTime(0, now)
-        gain3.gain.setValueAtTime(0.2, now + 0.1)
-        gain3.gain.exponentialRampToValueAtTime(0.01, now + 1.0)
-        
-        osc3.connect(gain3)
-        gain3.connect(this.listener.getInput())
-        osc3.start(now + 0.1)
-        osc3.stop(now + 1.2)
+        for (let i = 0; i < notes.length; i++) {
+            const time = now + (i * noteDuration)
+            const osc = ctx.createOscillator()
+            const gain = ctx.createGain()
+            
+            // The final note uses a sine for a smooth ringing bell, the arpeggios use triangle for a "plink" texture
+            osc.type = (i === notes.length - 1) ? 'sine' : 'triangle'
+            osc.frequency.setValueAtTime(notes[i], time)
+            
+            // Envelope
+            gain.gain.setValueAtTime(0, time)
+            gain.gain.linearRampToValueAtTime(SYNTH_VOLUMES.binFilled * (i === notes.length - 1 ? 1.0 : 0.6), time + 0.01)
+            
+            // The final note rings out slightly longer, but keeping it snappy
+            const tail = (i === notes.length - 1) ? 0.4 : 0.1
+            gain.gain.exponentialRampToValueAtTime(0.001, time + tail)
+            
+            osc.connect(gain)
+            gain.connect(this.listener.getInput())
+            
+            osc.start(time)
+            osc.stop(time + tail + 0.1)
+        }
     }
 
     /** Play an existing sound */
