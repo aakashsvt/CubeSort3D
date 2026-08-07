@@ -21,7 +21,7 @@ export default class Roulette {
             radius: 0.5,
             height: 1.2,
             posX: 0.0,
-            posY: 0.4,
+            posY: 0.48,
             posZ: 0.0
         }
         
