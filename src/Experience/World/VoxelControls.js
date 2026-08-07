@@ -1,5 +1,6 @@
 import Experience from '../Experience.js'
 import * as THREE from 'three'
+import * as CANNON from 'cannon-es'
 import FloodFillSelector from './FloodFillSelector.js'
 import WarningUI from '../../UI/WarningUI.js'
 
@@ -144,7 +145,7 @@ export default class VoxelControls {
         }
         if (this.cubeManager && this.cubeManager.dynamicCubes) {
             for (const item of this.cubeManager.dynamicCubes) {
-                if (item.body && item.body.translation().y >= 0.5 && !item.isRouting) {
+                if (item.body && item.body.position.y >= 0.5 && !item.isRouting) {
                     fallingColors.add(item.colorHex)
                 }
             }
@@ -281,7 +282,7 @@ export default class VoxelControls {
 
             while (this.spawnGroups.length > 0 && this.spawnTimer >= this.staggerDelay) {
                 if (this.staggerDelay > 0) {
-                    this.spawnTimer -= this.staggerDelay
+                this.spawnTimer -= this.staggerDelay
                 } else {
                     this.spawnTimer = 0
                 }
@@ -316,7 +317,7 @@ export default class VoxelControls {
                             const force = this.popcornEffect.minForce + Math.random() * (this.popcornEffect.maxForce - this.popcornEffect.minForce);
                             
                             // Apply linear impulse
-                            body.applyImpulse({ x: dirX * force, y: dirY * force, z: dirZ * force }, true);
+                            body.applyImpulse(new CANNON.Vec3(dirX * force, dirY * force, dirZ * force), new CANNON.Vec3(0,0,0));
                             
                             // Random torque (spin)
                             const spinX = (Math.random() - 0.5) * 2;
@@ -325,11 +326,7 @@ export default class VoxelControls {
                             
                             const spinLen = Math.sqrt(spinX*spinX + spinY*spinY + spinZ*spinZ);
                             const sForce = force * this.popcornEffect.spinMultiplier;
-                            body.applyTorqueImpulse({
-                                x: (spinX / spinLen) * sForce,
-                                y: (spinY / spinLen) * sForce,
-                                z: (spinZ / spinLen) * sForce
-                            }, true);
+                            body.angularVelocity.set((spinX / spinLen) * sForce, (spinY / spinLen) * sForce, (spinZ / spinLen) * sForce);
                         }
 
                         this.cubeManager.spawnCube(item.color, item.visualScale, body)

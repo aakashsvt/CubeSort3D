@@ -97,9 +97,9 @@ export default class LevelManager {
         
         // 3. Clear Cube Manager
         if (this.world.cubeManager.dynamicCubes) {
-            for (const item of this.world.cubeManager.dynamicCubes) {
-                if (item.body) this.world.physicsWorld.world.removeRigidBody(item.body);
-            }
+            this.world.cubeManager.dynamicCubes.forEach(item => {
+                if (item.body) this.world.physicsWorld.world.removeBody(item.body);
+            });
             this.world.cubeManager.dynamicCubes = [];
         }
         if (this.world.cubeManager.dynamicInstancedMesh) {

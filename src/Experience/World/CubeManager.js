@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import * as CANNON from 'cannon-es'
 import AnimatedRoutingStrategy from './AnimatedRoutingStrategy.js'
 import Experience from '../Experience.js'
 
@@ -99,7 +100,7 @@ export default class CubeManager {
     hasActiveFallingCubes() {
         if (!this.dynamicCubes) return false;
         for (let i = 0; i < this.dynamicCubes.length; i++) {
-            if (this.dynamicCubes[i].body && this.dynamicCubes[i].body.translation().y >= 0.5 && !this.dynamicCubes[i].isRouting) {
+            if (this.dynamicCubes[i].body && this.dynamicCubes[i].body.position.y >= 0.5 && !this.dynamicCubes[i].isRouting) {
                 return true;
             }
         }
@@ -153,10 +154,10 @@ export default class CubeManager {
 
             // 2. Cube still has a physics body (falling or just landed)
             if (item.body) {
-                const translation = item.body.translation()
-                const rotation = item.body.rotation()
+                const translation = item.body.position
+                const rotation = item.body.quaternion
 
-                const linvel = item.body.linvel()
+                const linvel = item.body.velocity
                 const speed = Math.sqrt(linvel.x * linvel.x + linvel.y * linvel.y + linvel.z * linvel.z)
 
                 const isNearTray = translation.y < 3.0; // Tray and piles rarely exceed Y=2.5
@@ -181,11 +182,11 @@ export default class CubeManager {
                         item.stuckInAirTime = (item.stuckInAirTime || 0) + dt
                         if (item.stuckInAirTime > 0.2) {
                             // Jiggle it to break the jam!
-                            item.body.applyImpulse({ 
-                                x: (Math.random() - 0.5) * 5, 
-                                y: -10, 
-                                z: (Math.random() - 0.5) * 5 
-                            }, true)
+                            item.body.applyImpulse(new CANNON.Vec3(
+                                (Math.random() - 0.5) * 5, 
+                                -10, 
+                                (Math.random() - 0.5) * 5 
+                            ), new CANNON.Vec3(0,0,0))
                             item.stuckInAirTime = 0
                         }
                     }
@@ -201,7 +202,7 @@ export default class CubeManager {
                     // === INSTANT KILL + FLAT SNAP + MATRIX PARENT ===
                     // The cube has touched the tray. Kill physics immediately.
                     // This eliminates ALL centripetal force, sliding, and tumbling.
-                    this.physicsWorld.world.removeRigidBody(item.body)
+                    this.physicsWorld.world.removeBody(item.body)
                     item.body = null
 
                     // 1. Create a world matrix representing exactly where the physics engine put the cube
