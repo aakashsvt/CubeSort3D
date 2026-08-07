@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'LilitaOne';
-    src: url('/fonts/LilitaOne-Regular.ttf') format('truetype');
+    src: url('/fonts/LilitaOne-Regular.woff2') format('woff2');
 }
 
 * {
