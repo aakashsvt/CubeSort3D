@@ -155,38 +155,25 @@ export default class AudioManager {
     }
 
     playSynthBinFilled() {
+        // Coin: Sharp Classic (Sine with instantaneous attack)
         const ctx = this.listener.context
         if (ctx.state !== 'running') return
-
         const now = ctx.currentTime
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'sine'
         
-        // A very satisfying, bright "magical" major arpeggio
-        const notes = [523.25, 659.25, 783.99, 1046.50] // C5, E5, G5, C6 (Major Chord)
-        const noteDuration = 0.035 // Very fast roll
+        osc.frequency.setValueAtTime(987.77, now) // B5
+        osc.frequency.setValueAtTime(1318.51, now + 0.06) // E6 (faster jump)
         
-        for (let i = 0; i < notes.length; i++) {
-            const time = now + (i * noteDuration)
-            const osc = ctx.createOscillator()
-            const gain = ctx.createGain()
-            
-            // The final note uses a sine for a smooth ringing bell, the arpeggios use triangle for a "plink" texture
-            osc.type = (i === notes.length - 1) ? 'sine' : 'triangle'
-            osc.frequency.setValueAtTime(notes[i], time)
-            
-            // Envelope
-            gain.gain.setValueAtTime(0, time)
-            gain.gain.linearRampToValueAtTime(SYNTH_VOLUMES.binFilled * (i === notes.length - 1 ? 1.0 : 0.6), time + 0.01)
-            
-            // The final note rings out slightly longer, but keeping it snappy
-            const tail = (i === notes.length - 1) ? 0.4 : 0.1
-            gain.gain.exponentialRampToValueAtTime(0.001, time + tail)
-            
-            osc.connect(gain)
-            gain.connect(this.listener.getInput())
-            
-            osc.start(time)
-            osc.stop(time + tail + 0.1)
-        }
+        gain.gain.setValueAtTime(SYNTH_VOLUMES.binFilled * 0.9, now) // instant attack
+        gain.gain.setValueAtTime(SYNTH_VOLUMES.binFilled * 0.9, now + 0.06)
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3)
+        
+        osc.connect(gain)
+        gain.connect(this.listener.getInput())
+        osc.start(now)
+        osc.stop(now + 0.4)
     }
 
     /** Play an existing sound */
